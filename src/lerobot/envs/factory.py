@@ -17,7 +17,7 @@ import importlib
 
 import gymnasium as gym
 
-from lerobot.envs.configs import AlohaEnv, EnvConfig, HILEnvConfig, PushtEnv, XarmEnv
+from lerobot.envs.configs import AlohaEnv, EnvConfig, HILEnvConfig, ManiskillEnv, PushtEnv, XarmEnv
 
 
 def make_env_config(env_type: str, **kwargs) -> EnvConfig:
@@ -29,6 +29,8 @@ def make_env_config(env_type: str, **kwargs) -> EnvConfig:
         return XarmEnv(**kwargs)
     elif env_type == "hil":
         return HILEnvConfig(**kwargs)
+    elif env_type == "maniskill":
+        return ManiskillEnv(**kwargs)
     else:
         raise ValueError(f"Policy type '{env_type}' is not available.")
 
@@ -49,6 +51,9 @@ def make_env(cfg: EnvConfig, n_envs: int = 1, use_async_envs: bool = False) -> g
     Returns:
         gym.vector.VectorEnv: The parallelized gym.env instance.
     """
+    # HACK(branyang02): If the config has a `create_env` method, we use that to create the environment.
+    if hasattr(cfg, "create_env"):
+        return cfg.create_env(n_envs=n_envs, use_async_envs=use_async_envs)
     if n_envs < 1:
         raise ValueError("`n_envs must be at least 1")
 

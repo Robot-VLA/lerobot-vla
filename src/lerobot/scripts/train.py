@@ -254,6 +254,7 @@ def train(cfg: TrainPipelineConfig):
             ):
                 eval_info = eval_policy(
                     eval_env,
+                    cfg.env,
                     policy,
                     cfg.eval.n_episodes,
                     videos_dir=cfg.output_dir / "eval" / f"videos_step_{step_id}",

@@ -65,6 +65,7 @@ from termcolor import colored
 from torch import Tensor, nn
 from tqdm import trange
 
+from lerobot import envs
 from lerobot.configs import parser
 from lerobot.configs.eval import EvalPipelineConfig
 from lerobot.envs.factory import make_env
@@ -219,6 +220,7 @@ def rollout(
 
 def eval_policy(
     env: gym.vector.VectorEnv,
+    env_config: envs.EnvConfig,
     policy: PreTrainedPolicy,
     n_episodes: int,
     max_episodes_rendered: int = 0,
@@ -295,13 +297,23 @@ def eval_policy(
             seeds = range(
                 start_seed + (batch_ix * env.num_envs), start_seed + ((batch_ix + 1) * env.num_envs)
             )
-        rollout_data = rollout(
-            env,
-            policy,
-            seeds=list(seeds) if seeds else None,
-            return_observations=return_episode_data,
-            render_callback=render_frame if max_episodes_rendered > 0 else None,
-        )
+        # HACK(branyang02): For future environments, we add a custom rollout method to the environment config.
+        if hasattr(env_config, "rollout"):
+            rollout_data = env_config.rollout(
+                env=env,
+                policy=policy,
+                seeds=list(seeds) if seeds else None,
+                return_observations=return_episode_data,
+                render_callback=render_frame if max_episodes_rendered > 0 else None,
+            )
+        else:
+            rollout_data = rollout(
+                env,
+                policy,
+                seeds=list(seeds) if seeds else None,
+                return_observations=return_episode_data,
+                render_callback=render_frame if max_episodes_rendered > 0 else None,
+            )
 
         # Figure out where in each rollout sequence the first done condition was encountered (results after
         # this won't be included).
@@ -484,6 +496,7 @@ def eval_main(cfg: EvalPipelineConfig):
     with torch.no_grad(), torch.autocast(device_type=device.type) if cfg.policy.use_amp else nullcontext():
         info = eval_policy(
             env,
+            cfg.env,
             policy,
             cfg.eval.n_episodes,
             max_episodes_rendered=10,
