@@ -16,21 +16,14 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 import draccus
-import einops
-import gymnasium as gym
-import torch
-from torch import nn
-from tqdm import trange
 
 from lerobot.configs.types import FeatureType, PolicyFeature
 from lerobot.constants import ACTION, OBS_ENV_STATE, OBS_IMAGE, OBS_IMAGES, OBS_STATE
-from lerobot.policies.utils import get_device_from_parameters
 from lerobot.robots import RobotConfig
 from lerobot.teleoperators.config import TeleoperatorConfig
-from lerobot.utils.utils import inside_slurm
 
 
 @dataclass
@@ -52,10 +45,11 @@ class EnvConfig(draccus.ChoiceRegistry, abc.ABC):
 
 @EnvConfig.register_subclass("maniskill")
 @dataclass
-class ManiskillEnv(EnvConfig):
+class ManiSkillEnvConfig(EnvConfig):
     task: str = "StackCube-v1"
     task_description: str = "Stack the red cube on top of the green cube."
-    fps: int = 30
+    fps: int = 20
+    max_episode_steps: int = 150
     features: dict[str, PolicyFeature] = field(
         default_factory=lambda: {
             "action": PolicyFeature(type=FeatureType.ACTION, shape=(8,)),
@@ -67,8 +61,8 @@ class ManiskillEnv(EnvConfig):
     features_map: dict[str, str] = field(
         default_factory=lambda: {
             "action": ACTION,
-            "observation.images.base_camera": OBS_IMAGE,
-            "observation.images.hand_camera": OBS_IMAGE,
+            "observation.images.base_camera": f"{OBS_IMAGES}.base_camera",
+            "observation.images.hand_camera": f"{OBS_IMAGES}.hand_camera",
             "observation.state": OBS_STATE,
         }
     )
@@ -78,129 +72,8 @@ class ManiskillEnv(EnvConfig):
         return {
             "obs_mode": "sensor_data",
             "control_mode": "pd_joint_pos",  # ['pd_joint_delta_pos', 'pd_joint_pos', 'pd_ee_delta_pos', 'pd_ee_delta_pose', 'pd_ee_pose', 'pd_joint_target_delta_pos', 'pd_ee_target_delta_pos', 'pd_ee_target_delta_pose', 'pd_joint_vel', 'pd_joint_pos_vel', 'pd_joint_delta_pos_vel']
+            "render_mode": "rgb_array",
         }
-
-    def create_env(self, n_envs: int = 1, use_async_envs: bool = False) -> gym.Env:
-        """
-        Creates a ManiSkill environment, see https://maniskill.readthedocs.io/en/latest/user_guide/getting_started/quickstart.html.
-        """
-        import mani_skill.envs  # noqa: F401
-
-        if use_async_envs:
-            raise NotImplementedError(
-                "Async vector environments are not supported for ManiSkill environments. "
-                "Please set `use_async_envs=False`."
-            )
-
-        env = gym.make(
-            self.task,
-            num_envs=n_envs,
-            **self.gym_kwargs,
-        )
-        return env
-
-    def rollout(
-        self,
-        env,
-        policy,
-        seeds: list[int] | None = None,
-        return_observations: bool = False,
-        render_callback: Callable[[gym.Env], None] | None = None,
-    ):
-        assert isinstance(policy, nn.Module), "Policy must be a PyTorch nn module."
-        device = get_device_from_parameters(policy)
-
-        # Reset the policy and environments.
-        policy.reset()
-        observation, info = env.reset(seed=seeds)
-        if render_callback is not None:
-            render_callback(env)
-
-        all_actions = []
-        all_rewards = []
-        all_successes = []
-        all_dones = []
-
-        step = 0
-        # Keep track of which environments are done.
-        done = torch.tensor([False] * env.num_envs, dtype=torch.bool, device=device)
-        max_steps = env._max_episode_steps
-        progbar = trange(
-            max_steps,
-            desc=f"Running rollout with at most {max_steps} steps",
-            disable=inside_slurm(),  # we dont want progress bar when we use slurm, since it clutters the logs
-            leave=False,
-        )
-
-        def process_image(img):
-            _, h, w, c = img.shape
-            assert c < h and c < w, f"expect channel last images, but instead got {img.shape=}"
-            assert img.dtype == torch.uint8, f"expect torch.uint8, but instead {img.dtype=}"
-            img = einops.rearrange(img, "b h w c -> b c h w").contiguous()
-            img = img.type(torch.float32)
-            img /= 255
-            return img
-
-        while not torch.all(done):
-            observation = {
-                "observation.images.base_camera": process_image(
-                    observation["sensor_data"]["base_camera"]["Color"][:, :, :, :3]
-                ),
-                "observation.images.hand_camera": process_image(
-                    observation["sensor_data"]["hand_camera"]["Color"][:, :, :, :3]
-                ),
-                "observation.state": torch.concat(
-                    [
-                        observation["agent"]["qpos"],  # qpos
-                        observation["agent"]["qvel"],  # qvel
-                    ],
-                    dim=-1,
-                ),
-            }
-            observation = {
-                key: observation[key].to(device, non_blocking=device.type == "cuda") for key in observation
-            }  # TODO(branyang02): check if this is needed.
-            observation["task"] = [self.task_description for _ in range(env.num_envs)]
-
-            with torch.inference_mode():
-                action = policy.select_action(observation)
-
-            action = action.to("cpu").numpy()
-            assert action.ndim == 2, "Action dimensions should be (batch, action_dim)"
-
-            observation, reward, terminated, truncated, info = env.step(action)
-            if render_callback is not None:
-                render_callback(env)
-
-            successes = info["success"]
-            done = terminated | truncated | done
-
-            all_actions.append(torch.from_numpy(action))
-            all_rewards.append(reward)
-            all_dones.append(done)
-            all_successes.append(successes)
-
-            step += 1
-            running_success_rate = torch.cat(all_successes, dim=0).float().mean()
-            progbar.set_postfix({"running_success_rate": f"{running_success_rate.item() * 100:.1f}%"})
-            progbar.update()
-
-        # Track the final observation.
-        if return_observations:
-            raise NotImplementedError(
-                "Returning observations is not implemented for ManiskillEnv. "
-                "You can modify the `rollout` method to return observations if needed."
-            )
-
-        # Stack the sequence along the first dimension so that we have (batch, sequence, *) tensors.
-        ret = {
-            "action": torch.stack(all_actions, dim=1).cpu(),
-            "reward": torch.stack(all_rewards, dim=1).cpu(),
-            "success": torch.stack(all_successes, dim=1).cpu(),
-            "done": torch.stack(all_dones, dim=1).cpu(),
-        }
-
-        return ret
 
 
 @EnvConfig.register_subclass("aloha")
