@@ -17,10 +17,11 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from lerobot import envs, policies  # noqa: F401
+from lerobot import policies  # noqa: F401
 from lerobot.configs import parser
 from lerobot.configs.default import EvalConfig
 from lerobot.configs.policies import PreTrainedConfig
+from lerobot.envs.configs import EnvConfig
 
 
 @dataclass
@@ -28,7 +29,7 @@ class EvalPipelineConfig:
     # Either the repo ID of a model hosted on the Hub or a path to a directory containing weights
     # saved using `Policy.save_pretrained`. If not provided, the policy is initialized from scratch
     # (useful for debugging). This argument is mutually exclusive with `--config`.
-    env: envs.EnvConfig
+    env: EnvConfig
     eval: EvalConfig = field(default_factory=EvalConfig)
     policy: PreTrainedConfig | None = None
     output_dir: Path | None = None
