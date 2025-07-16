@@ -85,6 +85,20 @@ def eval_policy(
     return_episode_data: bool = False,
     start_seed: int | None = None,
 ) -> dict:
+    """
+    Args:
+        env: The environment to evaluate the policy on.
+        policy: The policy.
+        n_episodes: The number of episodes to evaluate.
+        max_episodes_rendered: Maximum number of episodes to render into videos.
+        videos_dir: Where to save rendered videos.
+        return_episode_data: Whether to return episode data for online training. Incorporates the data into
+            the "episodes" key of the returned dictionary. # NOTE: This is not yet implemented.
+        start_seed: The first seed to use for the first individual rollout. For all subsequent rollouts the
+            seed is incremented by 1. If not provided, the environments are not manually seeded.
+    Returns:
+        Dictionary with metrics and data regarding the rollouts.
+    """
     if max_episodes_rendered > 0 and not videos_dir:
         raise ValueError("If max_episodes_rendered > 0, videos_dir must be provided.")
 
@@ -293,9 +307,6 @@ def _compile_episode_data(
 @parser.wrap()
 def eval_main(cfg: EvalPipelineConfig):
     logging.info(pformat(asdict(cfg)))
-
-    # Check device is available
-    device = get_safe_torch_device(cfg.policy.device, log=True)
 
     # Check device is available
     device = get_safe_torch_device(cfg.policy.device, log=True)

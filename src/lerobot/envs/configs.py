@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import draccus
 
@@ -48,6 +48,19 @@ class EnvConfig(draccus.ChoiceRegistry, abc.ABC):
 class ManiSkillEnvConfig(EnvConfig):
     task: str = "StackCube-v1"
     task_description: str = "Stack the red cube on top of the green cube."
+    control_mode: Literal[
+        "pd_joint_delta_pos",
+        "pd_joint_pos",
+        "pd_ee_delta_pos",
+        "pd_ee_delta_pose",
+        "pd_ee_pose",
+        "pd_joint_target_delta_pos",
+        "pd_ee_target_delta_pos",
+        "pd_ee_target_delta_pose",
+        "pd_joint_vel",
+        "pd_joint_pos_vel",
+        "pd_joint_delta_pos_vel",
+    ] = "pd_joint_pos"
     fps: int = 20
     max_episode_steps: int = 150
     features: dict[str, PolicyFeature] = field(
@@ -71,7 +84,7 @@ class ManiSkillEnvConfig(EnvConfig):
     def gym_kwargs(self) -> dict:
         return {
             "obs_mode": "sensor_data",
-            "control_mode": "pd_joint_pos",  # ['pd_joint_delta_pos', 'pd_joint_pos', 'pd_ee_delta_pos', 'pd_ee_delta_pose', 'pd_ee_pose', 'pd_joint_target_delta_pos', 'pd_ee_target_delta_pos', 'pd_ee_target_delta_pose', 'pd_joint_vel', 'pd_joint_pos_vel', 'pd_joint_delta_pos_vel']
+            "control_mode": self.control_mode,
             "render_mode": "rgb_array",
         }
 
