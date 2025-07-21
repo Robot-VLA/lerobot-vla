@@ -43,6 +43,40 @@ class EnvConfig(draccus.ChoiceRegistry, abc.ABC):
         raise NotImplementedError()
 
 
+@EnvConfig.register_subclass("isaaclab")
+@dataclass
+class IsaacLabEnvConfig(EnvConfig):
+    task: str = "DROID"
+    fps: int = 15
+    # https://github.com/arhanjain/sim-evals/blob/efd8e0aac2360bd05f0bfaf0f717e7c5ec4f1b2b/run_eval.py#L62
+    task_description: Literal[
+        "put the cube in the bowl", "put the can in the mug", "put banana in the bin", 
+    ] = "put the cube in the bowl"
+    enable_cameras: bool = True
+    headless: bool = True
+    use_fabric: bool = True
+    features: dict[str, PolicyFeature] = field(
+        default_factory=lambda: {
+            "action": PolicyFeature(type=FeatureType.ACTION, shape=(8,)),
+            "observation.images.external_cam": PolicyFeature(type=FeatureType.VISUAL, shape=(128, 128, 3)),
+            "observation.images.wrist_cam": PolicyFeature(type=FeatureType.VISUAL, shape=(128, 128, 3)),
+            "observation.state": PolicyFeature(type=FeatureType.STATE, shape=(18,)),
+        }
+    )
+    features_map: dict[str, str] = field(
+        default_factory=lambda: {
+            "action": ACTION,
+            "observation.images.external_cam": f"{OBS_IMAGES}.external_cam",
+            "observation.images.wrist_cam": f"{OBS_IMAGES}.wrist_cam",
+            "observation.state": OBS_STATE,
+        }
+    )
+
+    @property
+    def gym_kwargs(self) -> dict:
+        return {}
+
+
 @EnvConfig.register_subclass("maniskill")
 @dataclass
 class ManiSkillEnvConfig(EnvConfig):

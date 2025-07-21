@@ -1,4 +1,32 @@
-<p align="center">
+## Requirements
+- [`uv`](https://docs.astral.sh/uv/)
+- `ffmpeg`
+
+## Installation
+```
+uv sync --prerelease=allow # or set export UV_PRERELEASE=allow
+```
+
+### Troubleshooting
+- Follow the [ManiSkill installation instructions](https://maniskill.readthedocs.io/en/v3.0.0b21/user_guide/getting_started/installation.html) for `vulkan` setup.
+- Isaaclab: Install the required dependencies for your system:
+  ```
+  # Ubuntu dependencies:
+  sudo apt install cmake build-essential libsm6 libxext6 libxrender1 libxt6 libglu1-mesa mesa-utils libgl1-mesa-glx libglfw3 xvfb
+  ```
+
+### Misc
+
+If using docker container, must include
+
+```
+docker run -d --name=... \
+    --gpus=all \
+    --env NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display,video \
+```
+
+
+<!-- <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="media/lerobot-logo-thumbnail.png">
     <source media="(prefers-color-scheme: light)" srcset="media/lerobot-logo-thumbnail.png">
@@ -432,4 +460,4 @@ primaryClass={cs.RO}
 ```
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=huggingface/lerobot&type=Timeline)](https://star-history.com/#huggingface/lerobot&Timeline)
+[![Star History Chart](https://api.star-history.com/svg?repos=huggingface/lerobot&type=Timeline)](https://star-history.com/#huggingface/lerobot&Timeline) -->

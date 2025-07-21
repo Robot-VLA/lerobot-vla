@@ -17,16 +17,23 @@
 
 from lerobot.envs.base_env import LeRobotBaseEnv
 from lerobot.envs.configs import AlohaEnv, EnvConfig, HILEnvConfig, ManiSkillEnvConfig, PushtEnv, XarmEnv
-from lerobot.envs.gym_env import GymEnv
-from lerobot.envs.maniskill_env import ManiSkillEnv
 
 
 def get_env_class(name: str) -> LeRobotBaseEnv:
     """Get the environment class by name."""
     if name == "aloha" or name == "pusht" or name == "xarm" or name == "hil":
+        from lerobot.envs.gym_env import GymEnv
+
         return GymEnv
     elif name == "maniskill":
+        from lerobot.envs.maniskill_env import ManiSkillEnv
+
         return ManiSkillEnv
+    elif name == "isaaclab":
+        raise NotImplementedError("IsaacLabEnv is still WIP. Please use the GymEnv or ManiSkillEnv for now.")
+        from lerobot.envs.isaaclab.isaaclab_env import IsaacLabEnv
+
+        return IsaacLabEnv
     else:
         raise ValueError(f"Environment type '{name}' is not available.")
 

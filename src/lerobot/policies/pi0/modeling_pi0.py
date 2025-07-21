@@ -54,6 +54,7 @@ from collections import deque
 
 import torch
 import torch.nn.functional as F  # noqa: N812
+import transformers
 from torch import Tensor, nn
 from transformers import AutoTokenizer
 
@@ -66,6 +67,11 @@ from lerobot.policies.pi0.paligemma_with_expert import (
 )
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.utils.utils import get_safe_dtype
+
+# Assert that transformer version is 4.50.3 (we use inner functions in PaliGemma and it only works with this version).
+assert transformers.__version__ == "4.50.3", (
+    f"Expected transformers version 4.50.3 but got {transformers.__version__}"
+)
 
 
 def create_sinusoidal_pos_embedding(

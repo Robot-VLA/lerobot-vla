@@ -1,11 +1,16 @@
 """
+This script uses the ManiSkill trajectory dataset to replay trajectories in the LeRobot dataset format.
+In order to retrieve the camera observations, we use obs_mode: str = "sensor_data" to create the env.
+
+To use this file, make sure DATASET_FEATURES match the observation and action spaces of the environment you are trying to replay.
+
+
 python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
 --repo_id brandonyang/StackCube-v1 \
 --task_description "Stack the red cube on top of the green cube." \
 --traj_path /PFS/output/yangyifan/cache/maniskill_datasets/StackCube-v1/motionplanning/trajectory.h5 \
 --upload_to_hub \
 --count 200
-
 
 python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
 --repo_id brandonyang/PegInsertionSide-v1 \
@@ -14,24 +19,32 @@ python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
 --upload_to_hub \
 --count 200
 
+python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
+--repo_id brandonyang/PlugCharger-v1 \
+--task_description "Pick up one of the misplaced shapes on the board/kit and insert it into the correct empty slot." \
+--traj_path /PFS/output/yangyifan/cache/maniskill_datasets/PlugCharger-v1/motionplanning/trajectory.h5 \
+--upload_to_hub 
+
+
+python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
+--repo_id dummy/dummies-v1 \
+--task_description "Pick up one of the misplaced shapes on the board/kit and insert it into the correct empty slot." \
+--traj_path /PFS/output/yangyifan/cache/maniskill_datasets/LiftPegUpright-v1/rl/trajectory.none.pd_ee_delta_pose.physx_cuda.h5 \
+--upload_to_hub 
 
 """
 
-import copy
 import os
 from dataclasses import dataclass
 from typing import Annotated, Optional
 
 import gymnasium as gym
 import h5py
-import mani_skill.envs
 import numpy as np
 import torch
 import tyro
 from mani_skill.envs.utils.system.backend import CPU_SIM_BACKENDS
 from mani_skill.trajectory import utils as trajectory_utils
-from mani_skill.trajectory.merge_trajectory import merge_trajectories
-from mani_skill.trajectory.utils.actions import conversion as action_conversion
 from mani_skill.utils import common, io_utils, wrappers
 from mani_skill.utils.logging_utils import logger
 from mani_skill.utils.wrappers.flatten import FlattenActionSpaceWrapper
@@ -155,6 +168,17 @@ class Args:
     For parallelized simulation backends like physx_gpu, this is parallelized within a single python process by leveraging the GPU."""
 
 
+def print_nested_keys(d, prefix=""):
+    if isinstance(d, dict):
+        for k, v in d.items():
+            new_prefix = f"{prefix}.{k}" if prefix else k
+            print_nested_keys(v, new_prefix)
+    elif isinstance(d, torch.Tensor):
+        print(f"{prefix}: Tensor, shape={tuple(d.shape)}, dtype={d.dtype}, device={d.device}")
+    else:
+        print(f"{prefix}: {type(d).__name__}")
+
+
 @dataclass
 class ReplayResult:
     num_replays: int
@@ -174,6 +198,131 @@ def sanity_check_and_format_seed(episode):
         )
     else:
         episode["reset_kwargs"]["seed"] = episode["episode_seed"]
+
+
+def replay_parallelized_sim(args: Args, env: RecordEpisode, pbar, episodes, trajectories):
+    pbar.reset(total=len(episodes))
+    warned_reset_kwargs_options = False
+    # split all episodes into batches of args.num_envs environments and process each batch in parallel, truncating where necessary
+    # add fake episode padding to the end of the episodes to make sure all batches are the same size
+    episode_pad = (args.num_envs - len(episodes) % args.num_envs) % args.num_envs
+    batches = np.pad(
+        np.array(episodes),
+        (0, episode_pad),
+        mode="constant",
+        constant_values=episodes[-1],
+    ).reshape(-1, args.num_envs)
+
+    successful_replays = 0
+    if pbar is not None:
+        pbar.reset(total=len(episodes))
+    for episode_batch_index, episode_batch in enumerate(batches):
+        trajectory_ids = [episode["episode_id"] for episode in episode_batch]
+        episode_lens = np.array([episode["elapsed_steps"] for episode in episode_batch])
+        ori_control_mode = episode_batch[0]["control_mode"]
+        assert all([episode["control_mode"] == ori_control_mode for episode in episode_batch]), (
+            "Replay trajectory with parallelized environments is only supported for trajectories with the same control mode"
+        )
+        episode_batch_max_len = max(episode_lens)
+        seeds = torch.tensor(
+            [episode["episode_seed"] for episode in episode_batch],
+            device=env.base_env.device,
+        )
+        env.reset(seed=seeds)
+
+        # generate batched env states and actions
+        env_states_list = []
+        original_actions_batch = []
+        env_states_batch = []  # list of batched env states shape (max_steps, D)
+        for i, trajectory_id in enumerate(trajectory_ids):
+            # sanity check seeds and warn user if reset kwargs includes options (which are not supported in GPU sim replay)
+            traj = trajectories[f"traj_{trajectory_id}"]
+            episode = episode_batch[i]
+            sanity_check_and_format_seed(episode)
+            if not warned_reset_kwargs_options and "options" in episode["reset_kwargs"]:
+                logger.warning(
+                    f"Reset kwargs includes options, which are not supported in GPU sim replay and will be ignored."
+                )
+                warned_reset_kwargs_options = True
+
+            # note (stao): this code to reformat the trajectories into a list of batched dicts can be optimized
+            env_states = trajectory_utils.dict_to_list_of_dicts(traj["env_states"])
+            actions = np.array(traj["actions"])
+
+            # padding
+            for _ in range(episode_batch_max_len + 1 - len(env_states)):
+                env_states.append(env_states[-1])
+            if len(actions) < episode_batch_max_len:
+                actions = np.concatenate(
+                    [
+                        actions,
+                        np.zeros((episode_batch_max_len - len(actions), actions.shape[1])),
+                    ],
+                    axis=0,
+                )
+            env_states_list.append(env_states)
+            original_actions_batch.append(actions)
+        for t in range(episode_batch_max_len + 1):
+            env_states_batch.append(
+                trajectory_utils.list_of_dicts_to_dict(
+                    [env_states_list[i][t] for i in range(len(env_states_list))]
+                )
+            )
+
+        original_actions_batch = np.stack(original_actions_batch, axis=1)
+        if args.use_first_env_state or args.use_env_states:
+            # set the first environment state to the first states in the trajectories given
+            env.base_env.set_state_dict(env_states_batch[0])
+            if args.save_traj:
+                # replace the first saved env state
+                # since we set state earlier and RecordEpisode will save the reset to state.
+                def recursive_replace(x, y):
+                    if isinstance(x, np.ndarray):
+                        x[-1, :] = y[-1, :]
+                    else:
+                        for k in x.keys():
+                            recursive_replace(x[k], y[k])
+
+                recursive_replace(env._trajectory_buffer.state, common.batch(env_states_batch[0]))
+                recursive_replace(
+                    env._trajectory_buffer.observation,
+                    common.to_numpy(common.batch(env.base_env.get_obs())),
+                )
+
+        # replay with env states / actions
+        if args.target_control_mode is None or ori_control_mode == args.target_control_mode:
+            flushed_trajectories = np.zeros(len(episode_batch), dtype=bool)
+            # mark the fake padding trajectories as flushed
+            if episode_batch_index == len(batches) - 1 and episode_pad > 0:
+                flushed_trajectories[-episode_pad:] = True
+            for t, a in enumerate(original_actions_batch):
+                _, _, _, truncated, info = env.step(a)
+                if args.use_env_states:
+                    # NOTE (stao): due to the high precision nature of some tasks even taking a single step in GPU simulation (in e.g. PushT-v1) can lead
+                    # to some non-deterministic behaviors leading to some steps labeled with slightly wrong observations/rewards/success/fail data (1e-4 error).
+                    # I unfortunately do not have a good solution for this apart from using the same number of parallel environments to replay demos as the original trajectory collection.
+                    env.base_env.set_state_dict(env_states_batch[t])
+                if args.vis:
+                    env.base_env.render_human()
+                # if the elapsed_steps mark saved in the trajectory is reached for any env, flush that trajectory buffer
+
+                if args.save_traj:
+                    envs_to_flush = (t >= episode_lens - 1) & (~flushed_trajectories)
+                    flushed_trajectories |= envs_to_flush
+                    if envs_to_flush.sum() > 0:
+                        pbar.update(n=envs_to_flush.sum())
+                        if not args.allow_failure:
+                            if "success" in info:
+                                envs_to_flush &= (info["success"] == True).cpu().numpy()
+                        if args.discard_timeout:
+                            envs_to_flush &= (truncated == False).cpu().numpy()
+                        successful_replays += envs_to_flush.sum()
+                        env.flush_trajectory(env_idxs_to_flush=np.where(envs_to_flush)[0])
+        else:
+            raise NotImplementedError(
+                "Replay with different control modes are not supported when replaying on GPU parallelized environments"
+            )
+    return ReplayResult(num_replays=len(episodes), successful_replays=successful_replays)
 
 
 def replay_cpu_sim(args: Args, env: RecordEpisode, ori_env, pbar, episodes, trajectories):
@@ -381,8 +530,9 @@ def _main(
         )
     else:
         raise NotImplementedError(
-            "Replay with GPU parallelized environments is not implemented yet. Please use CPU parallelized replay for now."
+            "Converting trajectories with GPU parallelized environments is not supported yet. Please use CPU parallelized environments instead."
         )
+        replay_result = replay_parallelized_sim(args, env, pbar, episodes, ori_h5_file)
 
     env.close()
     ori_h5_file.close()
@@ -441,12 +591,12 @@ def main(args: Args):
         args.render_mode
     )  # note this only affects the videos saved as RecordEpisode wrapper calls env.render
 
-    record_episode_kwargs = dict(
-        save_on_reset=False,
-        save_trajectory=args.save_traj,
-        save_video=args.save_video,
-        record_reward=args.record_rewards,
-    )
+    record_episode_kwargs = {
+        "save_on_reset": False,
+        "save_trajectory": args.save_traj,
+        "save_video": args.save_video,
+        "record_reward": args.record_rewards,
+    }
 
     if args.count is not None and args.count > len(json_data["episodes"]):
         logger.warning(
@@ -500,5 +650,4 @@ def main(args: Args):
 
 
 if __name__ == "__main__":
-    # spawn is needed due to warp init issue
     main(parse_args())

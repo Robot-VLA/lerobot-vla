@@ -173,3 +173,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# all shell scripts
+*.sh
