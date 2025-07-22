@@ -353,12 +353,21 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         return outputs_embeds, past_key_values
 
     def get_attention_interface(self):
+        # Default to SDPA implementation when in training mode
+        if self.training:
+            return self.sdpa_attention_forward
+
+        # For inference, follow the configuration setting
         if self.config.attention_implementation == "fa2":
             attention_interface = self.flash_attention_forward
         elif self.config.attention_implementation == "flex":
             attention_interface = flex_attention_forward
-        else:
+        elif self.config.attention_implementation == "sdpa":
+            attention_interface = self.sdpa_attention_forward
+        elif self.config.attention_implementation == "eager":
             attention_interface = self.eager_attention_forward
+        else:
+            attention_interface = self.sdpa_attention_forward
         return attention_interface
 
     def flash_attention_forward(
@@ -416,6 +425,72 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
 
         att_output = att_output.permute(0, 2, 1, 3)
         # we use -1 because sequence length can change
+        att_output = att_output.reshape(batch_size, -1, num_key_value_heads * num_key_value_groups * head_dim)
+
+        return att_output
+
+    def sdpa_attention_forward(
+        self, attention_mask, batch_size, head_dim, query_states, key_states, value_states
+    ):
+        """Implement attention computation using scaled_dot_product_attention
+
+        Args:
+            attention_mask: Attention mask tensor
+            batch_size: Batch size
+            head_dim: Dimension of each attention head
+            query_states: Query states [batch, seq_len, num_heads, head_dim]
+            key_states: Key states [batch, seq_len, num_kv_heads, head_dim]
+            value_states: Value states [batch, seq_len, num_kv_heads, head_dim]
+
+        Returns:
+            Attention output [batch, seq_len, num_heads * head_dim]
+        """
+        # Get configuration parameters
+        num_att_heads = self.config.paligemma_config.text_config.num_attention_heads
+        num_key_value_heads = self.config.paligemma_config.text_config.num_key_value_heads
+        num_key_value_groups = num_att_heads // num_key_value_heads
+        sequence_length = key_states.shape[1]
+
+        # 1. GQA expansion
+        # Expand key_states and value_states to match the number of query heads
+        key_states = (
+            key_states[:, :, :, None, :]
+            .expand(batch_size, sequence_length, num_key_value_heads, num_key_value_groups, head_dim)
+            .reshape(batch_size, sequence_length, -1, head_dim)
+        )
+
+        value_states = (
+            value_states[:, :, :, None, :]
+            .expand(batch_size, sequence_length, num_key_value_heads, num_key_value_groups, head_dim)
+            .reshape(batch_size, sequence_length, -1, head_dim)
+        )
+
+        # 2. Adjust dimension order for SDPA
+        # Convert from [batch, seq_len, heads, dim] to [batch, heads, seq_len, dim]
+        query_states = query_states.transpose(1, 2)  # [batch, heads, seq_len, dim]
+        key_states = key_states.transpose(1, 2)  # [batch, heads, seq_len, dim]
+        value_states = value_states.transpose(1, 2)  # [batch, heads, seq_len, dim]
+
+        # 3. Convert attention_mask shape
+        # Convert from [batch, seq_len, seq_len] to [batch, 1, seq_len, seq_len]
+        attention_mask = attention_mask.unsqueeze(1)  # Add heads dimension
+
+        # 4. Compute attention using PyTorch's SDPA
+        # Uses whatever precision is set by the outside context
+        att_output = torch.nn.functional.scaled_dot_product_attention(
+            query_states,  # [batch, heads, seq_len, dim]
+            key_states,  # [batch, heads, seq_len, dim]
+            value_states,  # [batch, heads, seq_len, dim]
+            attn_mask=attention_mask,  # [batch, 1, seq_len, seq_len]
+            dropout_p=0.0,
+            scale=head_dim**-0.5,  # Explicitly specify scaling factor
+            is_causal=False,  # Causality is implemented through mask
+        )
+
+        # 5. Restore dimension order
+        att_output = att_output.transpose(1, 2)  # [batch, seq_len, heads, dim]
+
+        # 6. Reshape output to expected format
         att_output = att_output.reshape(batch_size, -1, num_key_value_heads * num_key_value_groups * head_dim)
 
         return att_output
