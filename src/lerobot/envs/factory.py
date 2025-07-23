@@ -30,7 +30,7 @@ def get_env_class(name: str) -> LeRobotBaseEnv:
 
         return ManiSkillEnv
     elif name == "isaaclab":
-        raise NotImplementedError("IsaacLabEnv is still WIP. Please use the GymEnv or ManiSkillEnv for now.")
+        # raise NotImplementedError("IsaacLabEnv is still WIP. Please use the GymEnv or ManiSkillEnv for now.")
         from lerobot.envs.isaaclab.isaaclab_env import IsaacLabEnv
 
         return IsaacLabEnv

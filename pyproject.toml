@@ -32,7 +32,7 @@ authors = [
 ]
 readme = "README.md"
 license = { text = "Apache-2.0" }
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.11"
 keywords = ["robotics", "deep learning", "pytorch"]
 classifiers = [
     "Development Status :: 3 - Alpha",
