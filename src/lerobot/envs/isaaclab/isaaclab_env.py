@@ -3,14 +3,20 @@ TODO(branyang02): WIP, creating IsaaclabEnv subclass for LeRobotEnv
 """
 
 import argparse
+from copy import deepcopy
 from typing import Any
 
 import einops
 import gymnasium as gym
 import torch
+import torch.nn as nn
+from tqdm import trange
 
 from lerobot.envs.base_env import LeRobotBaseEnv, RolloutResult
 from lerobot.envs.configs import IsaacLabEnvConfig
+from lerobot.policies.pretrained import PreTrainedPolicy
+from lerobot.policies.utils import get_device_from_parameters
+from lerobot.utils.utils import inside_slurm
 
 
 def print_nested_keys(d, prefix=""):
@@ -29,6 +35,12 @@ class IsaacLabEnv(LeRobotBaseEnv):
         super().__init__(config, num_envs)
         self.isaaclab_env = isaaclab_env
         self.simulation_app = simulation_app
+
+        # HACK(branyang02): isaaclab_env.render() only returns a single image (x, y, 3)
+        # https://isaac-sim.github.io/IsaacLab/v2.1.0/_modules/isaaclab/envs/manager_based_rl_env.html#ManagerBasedRLEnv.render
+        # Therefore we save the observation images to self._render_images instead
+
+        self._render_images = None
 
     @property
     def _max_steps(self) -> int:
@@ -49,6 +61,14 @@ class IsaacLabEnv(LeRobotBaseEnv):
             img = img.type(torch.float32)
             img /= 255
             return img
+
+        self._render_images = torch.concat(
+            [
+                raw_observation["policy"]["external_cam"],
+                raw_observation["policy"]["wrist_cam"],
+            ],
+            dim=2,  # Concatenate horizontally (width)
+        )
 
         processed = {
             "observation.images.external_cam": _preprocess_image(raw_observation["policy"]["external_cam"]),
@@ -114,11 +134,12 @@ class IsaacLabEnv(LeRobotBaseEnv):
         return observation, info
 
     def _render(self) -> torch.Tensor:
-        return self.isaaclab_env.render()
+        return self._render_images
 
     def _step(
         self, action: torch.Tensor, done: torch.Tensor
     ) -> tuple[dict, torch.Tensor, torch.Tensor, torch.Tensor]:
+        action = self.isaaclab_env.action_space.sample()
         action = self._move_to_device(action, self.isaaclab_env.env.device)
         step_results = self.isaaclab_env.step(action)
         observation, reward, terminated, truncated, info = (
@@ -126,11 +147,98 @@ class IsaacLabEnv(LeRobotBaseEnv):
         )
         observation = self._preprocess_observation(observation, task_description=self.config.task_description)
 
-        # Convert to LeRobot's RolloutResult format
-        result = RolloutResult(
-            observation=observation,
-            reward=reward,
-            done=terminated | truncated,
-            info=info,
+        print_nested_keys(info)
+        done = terminated | done
+
+        return observation, reward, done, done
+
+    def rollout(
+        self, policy: PreTrainedPolicy, seeds: list[int] | None = None, return_observations: bool = False
+    ) -> RolloutResult:
+        """
+        Run a rollout with the given policy in the environment.
+        Args:
+            policy: The policy to use for action selection.
+            seeds: Optional list of seeds for resetting the environment.
+            return_observations: Whether to return the observations during the rollout.
+        Returns:
+            A RolloutResult object containing:
+                - action: Actions taken during the rollout (shape: (batch, sequence, action_dim)).
+                - reward: Rewards received during the rollout (shape: (batch, sequence)).
+                - success: Successes during the rollout (shape: (batch, sequence)).
+                - done: Done flags during the rollout (shape: (batch, sequence)).
+                - frames: Rendered frames during the rollout (shape: (batch, sequence, height, width, channels)).
+                - observation: Optional observations during the rollout (shape: (batch, sequence, observation_dim)).
+        """
+
+        assert isinstance(policy, nn.Module), "Policy must be a PyTorch nn module."
+        policy_device = get_device_from_parameters(policy)
+
+        all_actions, all_rewards, all_successes, all_dones = [], [], [], []
+        all_observations, all_frames = [], []
+
+        # Reset the policy and environments.
+        policy.reset()
+        observation, info = self._reset(seeds=seeds)
+        all_frames.append(self._render().to(self.env_device))
+
+        step = 0
+        done = torch.tensor([False] * self.num_envs, dtype=torch.bool, device=self.env_device)
+        progbar = trange(
+            self._max_steps,
+            desc=f"Running rollout with at most {self._max_steps} steps",
+            disable=inside_slurm(),  # we dont want progress bar when we use slurm, since it clutters the logs
+            leave=False,
         )
-        return result.observation, result.reward, result.done, result.info
+
+        while not torch.all(done) and step < self._max_steps:
+            if return_observations:
+                all_observations.append(deepcopy(observation))
+
+            # Move observation to the same device as the policy.
+            observation = {
+                k: v.to(policy_device, non_blocking=policy_device.type == "cuda") if torch.is_tensor(v) else v
+                for k, v in observation.items()
+            }
+
+            with torch.inference_mode():
+                # action = policy.select_action(observation)
+                action = torch.zeros(0)  # Placeholder for action selection, replace with actual policy call.
+
+            observation, reward, done, successes = self._step(action, done)
+            all_frames.append(self._render().to(self.env_device))
+            if step + 1 >= self._max_steps:  # Force done if we reach max steps.
+                done = torch.tensor([True] * self.num_envs, dtype=torch.bool, device=self.env_device)
+
+            all_actions.append(action)
+            all_rewards.append(reward)
+            all_dones.append(done)
+            all_successes.append(successes)
+
+            step += 1
+            running_success_rate = torch.cat(all_successes, dim=0).float().mean()
+            progbar.set_postfix({"running_success_rate": f"{running_success_rate.item() * 100:.1f}%"})
+            progbar.update()
+
+        # Track the final observation.
+        if return_observations:
+            all_observations.append(deepcopy(observation))
+
+        ret = RolloutResult(
+            action=torch.stack(all_actions, dim=1),  # (batch, sequence, action_dim)
+            reward=torch.stack(all_rewards, dim=1),  # (batch, sequence)
+            success=torch.stack(all_successes, dim=1),  # (batch, sequence)
+            done=torch.stack(all_dones, dim=1),  # (batch, sequence)
+            frames=torch.stack(all_frames, dim=1),  # (batch, sequence, height, width, channels)
+        )
+
+        if return_observations:
+            stacked_observations = {}
+            for key in all_observations[0]:
+                if isinstance(all_observations[0][key], torch.Tensor):
+                    stacked_observations[key] = torch.stack([obs[key] for obs in all_observations], dim=1)
+            ret.observation = stacked_observations
+        else:
+            ret.observation = None
+
+        return ret
