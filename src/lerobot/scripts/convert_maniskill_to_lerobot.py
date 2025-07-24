@@ -4,34 +4,35 @@ In order to retrieve the camera observations, we use obs_mode: str = "sensor_dat
 
 To use this file, make sure DATASET_FEATURES match the observation and action spaces of the environment you are trying to replay.
 
-
+Example usage:
 python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
 --repo_id brandonyang/StackCube-v1 \
 --task_description "Stack the red cube on top of the green cube." \
---traj_path /PFS/output/yangyifan/cache/maniskill_datasets/StackCube-v1/motionplanning/trajectory.h5 \
+--traj_path <TRAJECTORY_PATH>/StackCube-v1/motionplanning/trajectory.h5 \
 --upload_to_hub \
 --count 200
 
 python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
 --repo_id brandonyang/PegInsertionSide-v1 \
 --task_description "Pick up a orange-white peg and insert the orange end into the box with a hole in it." \
---traj_path /PFS/output/yangyifan/cache/maniskill_datasets/PegInsertionSide-v1/motionplanning/trajectory.h5 \
+--traj_path <TRAJECTORY_PATH>/PegInsertionSide-v1/motionplanning/trajectory.h5 \
 --upload_to_hub \
 --count 200
 
 python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
 --repo_id brandonyang/PlugCharger-v1 \
 --task_description "Pick up one of the misplaced shapes on the board/kit and insert it into the correct empty slot." \
---traj_path /PFS/output/yangyifan/cache/maniskill_datasets/PlugCharger-v1/motionplanning/trajectory.h5 \
+--traj_path <TRAJECTORY_PATH>/PlugCharger-v1/motionplanning/trajectory.h5 \
 --upload_to_hub 
 
 
 python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
 --repo_id dummy/dummies-v1 \
 --task_description "Pick up one of the misplaced shapes on the board/kit and insert it into the correct empty slot." \
---traj_path /PFS/output/yangyifan/cache/maniskill_datasets/LiftPegUpright-v1/rl/trajectory.none.pd_ee_delta_pose.physx_cuda.h5 \
+--traj_path <TRAJECTORY_PATH>/LiftPegUpright-v1/rl/trajectory.none.pd_ee_delta_pose.physx_cuda.h5 \
 --upload_to_hub 
 
+Note: Replace <TRAJECTORY_PATH> with the actual path to your trajectory dataset.
 """
 
 import os
