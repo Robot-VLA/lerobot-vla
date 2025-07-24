@@ -49,9 +49,7 @@ class IsaacLabEnvConfig(EnvConfig):
     task: str = "DROID"
     fps: int = 15
     # https://github.com/arhanjain/sim-evals/blob/efd8e0aac2360bd05f0bfaf0f717e7c5ec4f1b2b/run_eval.py#L62
-    task_description: Literal[
-        "put the cube in the bowl", "put the can in the mug", "put banana in the bin", 
-    ] = "put the cube in the bowl"
+    task_description: str = "put the cube in the bowl"  # "put the cube in the bowl", "put the can in the mug", "put banana in the bin",
     enable_cameras: bool = True
     headless: bool = True
     use_fabric: bool = True
@@ -71,6 +69,13 @@ class IsaacLabEnvConfig(EnvConfig):
             "observation.state": OBS_STATE,
         }
     )
+
+    def __post_init__(self):
+        valid_descriptions = ["put the cube in the bowl", "put the can in the mug", "put banana in the bin"]
+        if self.task_description not in valid_descriptions:
+            raise ValueError(
+                f"Invalid task_description: '{self.task_description}'. Must be one of: {valid_descriptions}"
+            )
 
     @property
     def gym_kwargs(self) -> dict:

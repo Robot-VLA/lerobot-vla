@@ -147,10 +147,19 @@ class IsaacLabEnv(LeRobotBaseEnv):
         )
         observation = self._preprocess_observation(observation, task_description=self.config.task_description)
 
-        print_nested_keys(info)
-        done = terminated | done
+        # TODO(branyang02): Check handle success condition (copied from GymEnv)
+        if "final_info" in info:
+            successes = torch.tensor(
+                [info["is_success"] if info is not None else False for info in info["final_info"]],
+                device=self.env_device,
+                dtype=torch.bool,
+            )
+        else:
+            successes = torch.zeros(self.num_envs, device=self.env_device, dtype=torch.bool)
 
-        return observation, reward, done, done
+        done = terminated | truncated | done
+
+        return observation, reward, done, successes
 
     def rollout(
         self, policy: PreTrainedPolicy, seeds: list[int] | None = None, return_observations: bool = False
