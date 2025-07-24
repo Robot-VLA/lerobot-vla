@@ -108,9 +108,11 @@ def test_attention_speed_benchmark(device, seq_len):
             torch.cuda.synchronize()
         return (time.time() - start) / num_runs
 
-    eager_time = benchmark(lambda: create_test_model("eager").to(device).eager_attention_forward(**inputs))
-    sdpa_time = benchmark(lambda: create_test_model("sdpa").to(device).sdpa_attention_forward(**inputs))
+    model_eager = create_test_model("eager").to(device)
+    model_sdpa = create_test_model("sdpa").to(device)
 
+    eager_time = benchmark(lambda: model_eager.eager_attention_forward(**inputs))
+    sdpa_time = benchmark(lambda: model_sdpa.sdpa_attention_forward(**inputs))
     try:
         flex_time = benchmark(
             lambda: flex_attention_forward(
