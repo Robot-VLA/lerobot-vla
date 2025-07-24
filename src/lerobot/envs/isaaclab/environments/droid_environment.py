@@ -175,7 +175,7 @@ class BinaryJointPositionZeroToOneAction(BinaryJointPositionAction):
         # store the raw actions
         self._raw_actions[:] = actions
         # compute the binary mask
-        if actions.dtype == torch.bool:
+        if actions.dtype == torch.bool:  # noqa: SIM108
             # true: close, false: open
             binary_mask = actions == 0
         else:
@@ -266,7 +266,7 @@ class ActionCfg:
     )
 
 
-def arm_joint_pos(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")):
+def arm_joint_pos(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")):  # noqa: B008
     robot = env.scene[asset_cfg.name]
     joint_names = [
         "panda_joint1",
@@ -277,13 +277,13 @@ def arm_joint_pos(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntit
         "panda_joint6",
         "panda_joint7",
     ]
-    # get joint inidices
+    # get joint indices
     joint_indices = [i for i, name in enumerate(robot.data.joint_names) if name in joint_names]
     joint_pos = robot.data.joint_pos[0, joint_indices]
     return joint_pos
 
 
-def gripper_pos(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")):
+def gripper_pos(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")):  # noqa: B008
     robot = env.scene[asset_cfg.name]
     joint_names = ["finger_joint"]
     joint_indices = [i for i, name in enumerate(robot.data.joint_names) if name in joint_names]

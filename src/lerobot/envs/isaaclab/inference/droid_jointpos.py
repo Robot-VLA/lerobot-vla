@@ -140,7 +140,7 @@ class Client(InferenceClient):
 if __name__ == "__main__":
     import torch
 
-    args = tyro.cli(Args)
+    args = tyro.cli(Args)  # noqa: F821
     client = Client(args)
     fake_obs = {
         "splat": {
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     start = time.time()
     client.infer(fake_obs, fake_instruction)  # warm up
     num = 20
-    for i in range(num):
+    for _i in range(num):
         ret = client.infer(fake_obs, fake_instruction)
         print(ret["action"].shape)
     end = time.time()

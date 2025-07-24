@@ -125,7 +125,7 @@ def test_attention_speed_benchmark(device, seq_len):
             )
         )
     except Exception:
-        flex_time = None
+        flex_time = None  # noqa: F841
 
     assert eager_time > 0 and sdpa_time > 0
 

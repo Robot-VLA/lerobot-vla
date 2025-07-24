@@ -221,7 +221,7 @@ def replay_parallelized_sim(args: Args, env: RecordEpisode, pbar, episodes, traj
         trajectory_ids = [episode["episode_id"] for episode in episode_batch]
         episode_lens = np.array([episode["elapsed_steps"] for episode in episode_batch])
         ori_control_mode = episode_batch[0]["control_mode"]
-        assert all([episode["control_mode"] == ori_control_mode for episode in episode_batch]), (
+        assert all(episode["control_mode"] == ori_control_mode for episode in episode_batch), (
             "Replay trajectory with parallelized environments is only supported for trajectories with the same control mode"
         )
         episode_batch_max_len = max(episode_lens)
@@ -242,7 +242,7 @@ def replay_parallelized_sim(args: Args, env: RecordEpisode, pbar, episodes, traj
             sanity_check_and_format_seed(episode)
             if not warned_reset_kwargs_options and "options" in episode["reset_kwargs"]:
                 logger.warning(
-                    f"Reset kwargs includes options, which are not supported in GPU sim replay and will be ignored."
+                    "Reset kwargs includes options, which are not supported in GPU sim replay and will be ignored."
                 )
                 warned_reset_kwargs_options = True
 
@@ -281,7 +281,7 @@ def replay_parallelized_sim(args: Args, env: RecordEpisode, pbar, episodes, traj
                     if isinstance(x, np.ndarray):
                         x[-1, :] = y[-1, :]
                     else:
-                        for k in x.keys():
+                        for k in x:
                             recursive_replace(x[k], y[k])
 
                 recursive_replace(env._trajectory_buffer.state, common.batch(env_states_batch[0]))
@@ -312,11 +312,10 @@ def replay_parallelized_sim(args: Args, env: RecordEpisode, pbar, episodes, traj
                     flushed_trajectories |= envs_to_flush
                     if envs_to_flush.sum() > 0:
                         pbar.update(n=envs_to_flush.sum())
-                        if not args.allow_failure:
-                            if "success" in info:
-                                envs_to_flush &= (info["success"] == True).cpu().numpy()
+                        if not args.allow_failure and "success" in info:
+                            envs_to_flush &= (info["success"]).cpu().numpy()
                         if args.discard_timeout:
-                            envs_to_flush &= (truncated == False).cpu().numpy()
+                            envs_to_flush &= (not truncated).cpu().numpy()
                         successful_replays += envs_to_flush.sum()
                         env.flush_trajectory(env_idxs_to_flush=np.where(envs_to_flush)[0])
         else:
@@ -366,7 +365,7 @@ def replay_cpu_sim(args: Args, env: RecordEpisode, ori_env, pbar, episodes, traj
                         if isinstance(x, np.ndarray):
                             x[-1, :] = y[-1, :]
                         else:
-                            for k in x.keys():
+                            for k in x:
                                 recursive_replace(x[k], y[k])
 
                     recursive_replace(env._trajectory_buffer.state, common.batch(ori_env_states[0]))
@@ -501,10 +500,7 @@ def _main(
     if use_cpu_backend:
         if num_procs > 1:
             new_traj_name = new_traj_name + "." + str(proc_id)
-        if args.target_control_mode is not None:
-            ori_env = gym.make(env_id, **ori_env_kwargs)
-        else:
-            ori_env = None
+        ori_env = gym.make(env_id, **ori_env_kwargs) if args.target_control_mode is not None else None
     else:
         pass
 
