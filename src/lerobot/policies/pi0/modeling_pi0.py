@@ -96,9 +96,8 @@ def create_sinusoidal_pos_embedding(
 
 
 def sample_beta(alpha, beta, bsize, device):
-    gamma1 = torch.empty((bsize,), device=device).uniform_(0, 1).pow(1 / alpha)
-    gamma2 = torch.empty((bsize,), device=device).uniform_(0, 1).pow(1 / beta)
-    return gamma1 / (gamma1 + gamma2)
+    m = torch.distributions.beta.Beta(torch.tensor([alpha]), torch.tensor([beta]))
+    return m.sample((bsize,)).to(device).reshape((bsize,))
 
 
 def make_att_2d_masks(pad_masks, att_masks):
