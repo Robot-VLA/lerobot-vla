@@ -162,9 +162,9 @@ class PaliGemmaWithExpertConfig(PretrainedConfig):
                 "You set `freeze_vision_encoder=False` and `train_expert_only=True` which are not compatible."
             )
 
-        if self.attention_implementation not in ["eager", "fa2", "flex"]:
+        if self.attention_implementation not in ["sdpa", "eager", "fa2", "flex"]:
             raise ValueError(
-                f"Wrong value provided for `attention_implementation` ({self.attention_implementation}). Expected 'eager', 'fa2' or 'flex'."
+                f"Wrong value provided for `attention_implementation` ({self.attention_implementation}). Expected 'sdpa', 'eager', 'fa2' or 'flex'."
             )
 
 
