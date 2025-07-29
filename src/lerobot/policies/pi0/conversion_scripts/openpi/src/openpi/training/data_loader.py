@@ -9,11 +9,11 @@ import jax.numpy as jnp
 import numpy as np
 import torch
 
-import src.lerobot.datasets.lerobot_dataset as lerobot_dataset
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.model as _model
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.config as _config
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.transforms as _transforms
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.droid_rlds_dataset import (
+import lerobot.datasets.lerobot_dataset as lerobot_dataset
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.model as _model
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.config as _config
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.transforms as _transforms
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.droid_rlds_dataset import (
     DroidRldsDataset,
 )
 

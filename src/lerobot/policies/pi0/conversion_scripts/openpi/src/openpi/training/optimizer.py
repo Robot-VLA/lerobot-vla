@@ -4,7 +4,7 @@ from typing import Protocol, runtime_checkable
 import jax.numpy as jnp
 import optax
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
 
 
 @runtime_checkable

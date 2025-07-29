@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import tokenizer as _tokenizer
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import tokenizer as _tokenizer
 
 
 def test_tokenize():

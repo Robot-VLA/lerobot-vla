@@ -6,8 +6,9 @@ import traceback
 
 import websockets.asyncio.server as _server
 import websockets.frames
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import base_policy as _base_policy
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import msgpack_numpy
+
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import base_policy as _base_policy
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import msgpack_numpy
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import tree
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import msgpack_numpy
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import msgpack_numpy
 
 
 def _check(expected, actual):

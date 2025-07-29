@@ -1,7 +1,7 @@
 import flax.nnx as nnx
 import jax
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.pi0 as _pi0
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.pi0 as _pi0
 
 
 def _get_frozen_state(config: _pi0.Pi0Config) -> nnx.State:

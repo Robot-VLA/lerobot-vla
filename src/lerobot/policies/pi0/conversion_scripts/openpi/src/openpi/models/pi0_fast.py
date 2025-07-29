@@ -9,11 +9,11 @@ import jax
 import jax.numpy as jnp
 from typing_extensions import override
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.gemma_fast as _gemma
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.siglip as _siglip
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.nnx_utils as nnx_utils
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import array_typing as at
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.gemma_fast as _gemma
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.siglip as _siglip
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.nnx_utils as nnx_utils
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import array_typing as at
 
 logger = logging.getLogger("openpi")
 

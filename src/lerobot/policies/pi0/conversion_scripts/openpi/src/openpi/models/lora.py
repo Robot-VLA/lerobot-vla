@@ -5,7 +5,7 @@ import flax.linen as nn
 import flax.struct as struct
 import jax.numpy as jnp
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
 
 
 @struct.dataclass

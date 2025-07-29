@@ -13,8 +13,8 @@ import numpy as np
 import orbax.checkpoint as ocp
 from flax import nnx, struct, traverse_util
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import image_tools
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import image_tools
 
 logger = logging.getLogger("openpi")
 

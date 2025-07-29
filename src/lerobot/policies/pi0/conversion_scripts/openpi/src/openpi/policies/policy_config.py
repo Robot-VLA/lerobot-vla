@@ -6,12 +6,12 @@ from typing import Any
 
 import jax.numpy as jnp
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.model as _model
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies.policy as _policy
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.download as download
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.transforms as transforms
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import checkpoints as _checkpoints
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import config as _config
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.model as _model
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies.policy as _policy
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.download as download
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.transforms as transforms
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import checkpoints as _checkpoints
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import config as _config
 
 
 @dataclasses.dataclass

@@ -1,7 +1,7 @@
 from typing_extensions import override
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import base_policy as _base_policy
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client.runtime import agent as _agent
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import base_policy as _base_policy
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client.runtime import agent as _agent
 
 
 class PolicyAgent(_agent.Agent):

@@ -2,7 +2,7 @@ import pathlib
 
 import pytest
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.download as download
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.download as download
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -2,9 +2,9 @@ import jax
 import pytest
 from flax import nnx
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import pi0, pi0_fast
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import download, nnx_utils
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import pi0, pi0_fast
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import download, nnx_utils
 
 
 def test_pi0_model():

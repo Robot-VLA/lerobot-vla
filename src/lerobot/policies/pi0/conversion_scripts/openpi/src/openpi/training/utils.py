@@ -5,8 +5,8 @@ import jax
 import optax
 from flax import nnx, struct
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import array_typing as at
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import array_typing as at
 
 
 @at.typecheck

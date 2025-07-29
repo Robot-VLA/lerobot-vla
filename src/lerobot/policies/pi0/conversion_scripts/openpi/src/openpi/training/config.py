@@ -13,20 +13,20 @@ import flax.nnx as nnx
 import tyro
 from typing_extensions import override
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.model as _model
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.pi0 as pi0
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.pi0_fast as pi0_fast
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.tokenizer as _tokenizer
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies.aloha_policy as aloha_policy
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies.droid_policy as droid_policy
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies.libero_policy as libero_policy
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.download as _download
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.normalize as _normalize
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.droid_rlds_dataset as droid_rlds_dataset
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.misc.roboarena_config as roboarena_config
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.optimizer as _optimizer
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.weight_loaders as weight_loaders
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.transforms as _transforms
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.model as _model
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.pi0 as pi0
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.pi0_fast as pi0_fast
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.tokenizer as _tokenizer
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies.aloha_policy as aloha_policy
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies.droid_policy as droid_policy
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies.libero_policy as libero_policy
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.download as _download
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.normalize as _normalize
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.droid_rlds_dataset as droid_rlds_dataset
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.misc.roboarena_config as roboarena_config
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.optimizer as _optimizer
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.weight_loaders as weight_loaders
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.transforms as _transforms
 
 ModelType: TypeAlias = _model.ModelType
 # Work around a tyro issue with using nnx.filterlib.Filter directly.

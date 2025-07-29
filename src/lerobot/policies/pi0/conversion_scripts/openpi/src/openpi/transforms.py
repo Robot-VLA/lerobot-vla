@@ -7,10 +7,10 @@ import flax.traverse_util as traverse_util
 import jax
 import numpy as np
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import tokenizer as _tokenizer
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import array_typing as at
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import normalize as _normalize
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import image_tools
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import tokenizer as _tokenizer
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import array_typing as at
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import normalize as _normalize
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import image_tools
 
 DataDict: TypeAlias = at.PyTree
 NormStats: TypeAlias = _normalize.NormStats

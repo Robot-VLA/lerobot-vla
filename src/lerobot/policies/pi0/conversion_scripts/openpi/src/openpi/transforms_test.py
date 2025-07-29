@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.tokenizer as _tokenizer
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.transforms as _transforms
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.tokenizer as _tokenizer
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.transforms as _transforms
 
 
 def test_repack_transform():

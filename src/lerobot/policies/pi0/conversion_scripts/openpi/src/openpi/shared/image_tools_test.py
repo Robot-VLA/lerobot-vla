@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import image_tools
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import image_tools
 
 
 def test_resize_with_pad_shapes():

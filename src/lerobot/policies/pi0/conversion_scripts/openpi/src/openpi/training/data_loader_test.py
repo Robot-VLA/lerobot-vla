@@ -2,9 +2,9 @@ import dataclasses
 
 import jax
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import pi0
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import config as _config
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import data_loader as _data_loader
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import pi0
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import config as _config
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import data_loader as _data_loader
 
 
 def test_torch_data_loader():

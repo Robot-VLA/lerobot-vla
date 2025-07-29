@@ -20,7 +20,7 @@ import flax.linen as nn
 import jax
 import jax.numpy as jnp
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import resnet as models_resnet
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import resnet as models_resnet
 
 Array = Any
 PRNGKey = Any

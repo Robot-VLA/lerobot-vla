@@ -11,10 +11,10 @@ import orbax.checkpoint as ocp
 import orbax.checkpoint.future as future
 from etils import epath
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.normalize as _normalize
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.data_loader as _data_loader
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.utils as training_utils
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import array_typing as at
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.normalize as _normalize
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.data_loader as _data_loader
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.utils as training_utils
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import array_typing as at
 
 
 def initialize_checkpoint_dir(

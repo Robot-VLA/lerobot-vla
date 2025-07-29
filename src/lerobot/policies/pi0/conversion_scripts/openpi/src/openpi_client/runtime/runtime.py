@@ -2,9 +2,11 @@ import logging
 import threading
 import time
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client.runtime import agent as _agent
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client.runtime import environment as _environment
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client.runtime import subscriber as _subscriber
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client.runtime import agent as _agent
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client.runtime import (
+    environment as _environment,
+)
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client.runtime import subscriber as _subscriber
 
 
 class Runtime:

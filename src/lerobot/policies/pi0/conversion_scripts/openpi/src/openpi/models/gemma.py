@@ -34,9 +34,9 @@ import flax.linen as nn
 import jax
 import jax.numpy as jnp
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.lora as lora
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.sharding as sharding
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.lora as lora
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.sharding as sharding
 
 PALIGEMMA_VOCAB_SIZE = 257_152
 

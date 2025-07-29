@@ -1,6 +1,6 @@
 import numpy as np
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.normalize as normalize
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.normalize as normalize
 
 
 def test_normalize_update():

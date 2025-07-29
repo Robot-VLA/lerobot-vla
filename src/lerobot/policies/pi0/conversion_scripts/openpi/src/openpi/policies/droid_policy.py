@@ -2,9 +2,9 @@ import dataclasses
 
 import einops
 import numpy as np
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi import transforms
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi import transforms
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
 
 
 def make_droid_example() -> dict:

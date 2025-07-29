@@ -1,11 +1,11 @@
 import pytest
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import action_chunk_broker
 
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies import aloha_policy
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies import (
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies import aloha_policy
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies import (
     policy_config as _policy_config,
 )
-from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import config as _config
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import config as _config
+from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import action_chunk_broker
 
 
 @pytest.mark.manual

@@ -26,8 +26,8 @@ import jax
 import jax.numpy as jnp
 import ml_collections
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.lora as lora
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.lora as lora
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
 
 Variant = Literal["gemma_2b", "gemma_2b_lora"]
 

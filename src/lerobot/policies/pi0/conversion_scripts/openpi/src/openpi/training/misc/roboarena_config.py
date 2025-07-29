@@ -2,19 +2,19 @@
 
 from typing import TypeAlias
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.model as _model
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.pi0 as pi0
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.pi0_fast as pi0_fast
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.tokenizer as _tokenizer
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies.droid_policy as droid_policy
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.transforms as _transforms
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.model as _model
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.pi0 as pi0
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.pi0_fast as pi0_fast
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.tokenizer as _tokenizer
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies.droid_policy as droid_policy
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.transforms as _transforms
 
 ModelType: TypeAlias = _model.ModelType
 
 
 def get_roboarena_configs():
     # Import here to avoid circular imports.
-    from src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.config import (
+    from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training.config import (
         AssetsConfig,
         DataConfig,
         SimpleDataConfig,

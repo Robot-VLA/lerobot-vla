@@ -6,9 +6,9 @@ from typing import Protocol, runtime_checkable
 import flax.traverse_util
 import numpy as np
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.model as _model
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.download as download
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.model as _model
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.download as download
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@ import flax.linen as nn
 import jax
 import jax.numpy as jnp
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.lora as lora
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.lora as lora
 
 
 def test_lora_einsum_params_shape():

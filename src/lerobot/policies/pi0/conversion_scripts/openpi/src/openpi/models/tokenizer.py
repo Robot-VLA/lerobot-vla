@@ -7,8 +7,8 @@ import orbax.checkpoint as ocp
 import sentencepiece
 from transformers import AutoProcessor
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.utils.fsq_tokenizer as fsq_tokenizer
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.download as download
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models.utils.fsq_tokenizer as fsq_tokenizer
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.download as download
 
 
 class PaligemmaTokenizer:

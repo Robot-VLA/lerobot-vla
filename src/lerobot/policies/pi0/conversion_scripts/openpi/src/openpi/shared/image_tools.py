@@ -3,7 +3,7 @@ import functools
 import jax
 import jax.numpy as jnp
 
-import src.lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
+import lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared.array_typing as at
 
 
 @functools.partial(jax.jit, static_argnums=(1, 2, 3))

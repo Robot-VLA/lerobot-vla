@@ -7,6 +7,6 @@ class BasePolicy(abc.ABC):
     def infer(self, obs: Dict) -> Dict:
         """Infer actions from observations."""
 
-    def reset(self) -> None:
+    def reset(self) -> None:  # noqa: B027
         """Reset the policy to its initial state."""
         pass
