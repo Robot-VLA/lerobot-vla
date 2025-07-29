@@ -169,7 +169,7 @@ class ImageTransformsConfig:
     """
 
     # Set this flag to `true` to enable transforms during training
-    enable: bool = False
+    enable: bool = True
     # This is the maximum number of transforms (sampled from these below) that will be applied to each frame.
     # It's an integer in the interval [1, number_of_available_transforms].
     max_num_transforms: int = 3
