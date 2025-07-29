@@ -216,11 +216,13 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
                 param.data = param.data.to(dtype=torch.bfloat16)
 
     def embed_image(self, image: torch.Tensor):
-        # Handle different transformers versions
-        if hasattr(self.paligemma, "get_image_features"):
-            return self.paligemma.get_image_features(image)
-        else:
-            return self.paligemma.model.get_image_features(image)
+        # TODO(branyang02): check dtype info
+        self.paligemma.to(dtype=torch.float32)
+        image_outputs = self.paligemma.vision_tower(image)
+        selected_image_feature = image_outputs.last_hidden_state
+        image_features = self.paligemma.multi_modal_projector(selected_image_feature)
+        self.paligemma.to(dtype=torch.bfloat16)
+        return image_features
 
     def embed_language_tokens(self, tokens: torch.Tensor):
         return self.paligemma.language_model.model.embed_tokens(tokens)
