@@ -39,6 +39,9 @@ from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import dow
 from lerobot.policies.pi0.modeling_pi0 import PI0Policy
 from tests.utils import DEVICE
 
+ATOL = 3e-2  # Absolute tolerance for action differences
+ATTN_IMPL = "sdpa"  # Attention implementation to use in the policy
+
 
 def modify_policy(orig_policy, openpi_state_dict):
     print("Modifying policy with OpenPI state dict...")
@@ -99,7 +102,7 @@ def lerobot_pi0(dummy_dataset_metadata, monkeypatch, openpi_state_dict):
     policy_cfg = PI0Config(
         n_action_steps=50,
         chunk_size=50,
-        attention_implementation="sdpa",
+        attention_implementation=ATTN_IMPL,
     )
     features = dataset_to_policy_features(dummy_dataset_metadata.features)
     policy_cfg.output_features = {key: ft for key, ft in features.items() if ft.type is FeatureType.ACTION}
@@ -123,7 +126,7 @@ def lerobot_pi0(dummy_dataset_metadata, monkeypatch, openpi_state_dict):
         for key in present_img_keys:
             img = batch[key]
 
-            # Normalize from range [0,1] to [-1,1] as expected by siglip
+            # HACK: We skip normalization here as we only use dummy values
             # img = img * 2.0 - 1.0
 
             bsize = img.shape[0]
@@ -149,6 +152,7 @@ def lerobot_pi0(dummy_dataset_metadata, monkeypatch, openpi_state_dict):
         device = batch[OBS_STATE].device
         b_size = batch[OBS_STATE].shape[0]
 
+        # NOTE: Match BaseModelConfig.fake_obs() to generate 1's for language tokens and masks
         lang_tokens = torch.ones((b_size, self.config.tokenizer_max_length), dtype=torch.int64, device=device)
         lang_masks = torch.ones((b_size, self.config.tokenizer_max_length), dtype=torch.bool, device=device)
 
@@ -176,9 +180,6 @@ def lerobot_pi0(dummy_dataset_metadata, monkeypatch, openpi_state_dict):
 
         # HACK: We skip normalization here as we only use dummy values
         # actions = self.unnormalize_outputs({"action": actions})["action"]
-
-        if self.config.adapt_to_pi_aloha:
-            actions = self._pi_aloha_encode_actions(actions)
 
         return actions
 
@@ -235,12 +236,6 @@ def get_policy_inputs():
 
 
 def test_openpi_pi0(openpi_pi0, lerobot_pi0, get_policy_inputs):
-    import os
-
-    for fname in os.listdir("."):
-        if fname.endswith(".pt") and os.path.isfile(fname):
-            os.remove(fname)
-
     key = jax.random.key(0)
     batch_size = get_policy_inputs["lerobot_inputs"][OBS_STATE].shape[0]
 
@@ -254,7 +249,7 @@ def test_openpi_pi0(openpi_pi0, lerobot_pi0, get_policy_inputs):
     pi0_torch = torch.from_numpy(np.array(pi0_actions)).to(lerobot_actions.device)
 
     # --- custom assertion with full table output ---
-    atol = 3e-2
+    atol = ATOL
     diff = torch.abs(lerobot_actions - pi0_torch)
     mask = diff > atol
 
@@ -271,8 +266,9 @@ def test_openpi_pi0(openpi_pi0, lerobot_pi0, get_policy_inputs):
             rows.append((f"[{i},{j},{k}]", v_lr, v_p0, abs(v_lr - v_p0)))
 
         # build a table string
+        percentage = num_diff / total * 100
         header = (
-            f"{num_diff}/{total} values differ by > {atol:.1e} (max diff={float(diff[mask].max()):.4f})\n"
+            f"{num_diff}/{total} ({percentage}) values differ by > {atol:.1e} (max diff={float(diff[mask].max()):.4f})\n"
         )
         header += " index      lerobot      openpi      diff\n"
         header += "-------------------------------------------\n"
