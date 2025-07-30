@@ -11,7 +11,18 @@ from lerobot.policies.pi0.paligemma_with_expert import (
 from tests.utils import DEVICE
 
 BATCH_SIZE = 64
-SEQ_LEN = 64
+SEQ_LEN = 816
+
+
+class MockPaliGemmaWithExpertModel(torch.nn.Module):
+    get_attention_interface = PaliGemmaWithExpertModel.get_attention_interface
+    eager_attention_forward = PaliGemmaWithExpertModel.eager_attention_forward
+    sdpa_attention_forward = PaliGemmaWithExpertModel.sdpa_attention_forward
+    flash_attention_forward = PaliGemmaWithExpertModel.flash_attention_forward
+
+    def __init__(self, config: PaliGemmaWithExpertConfig):
+        super().__init__()
+        self.config = config
 
 
 @pytest.fixture
@@ -21,8 +32,7 @@ def action_expert():
         attention_implementation="eager",
         train_expert_only=True,
     )
-    model = PaliGemmaWithExpertModel(cfg)
-    model.eval()
+    model = MockPaliGemmaWithExpertModel(cfg)
     return model
 
 
@@ -60,7 +70,7 @@ def test_inputs():
 
 
 def _timed_forward(interface, inputs):
-    """Forward pass with CUDA‑sync timing; returns (output, ms)."""
+    """Forward pass with CUDA-sync timing; returns (output, ms)."""
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     t0 = time.perf_counter()
@@ -75,7 +85,7 @@ def test_attention_correctness(action_expert, test_inputs):
     timings = {}
 
     # 1. eager
-    attn = action_expert.get_attention_interface()
+    attn = action_expert.get_attention_interface()  # "eager"
     eager_out, timings["eager"] = _timed_forward(attn, test_inputs)
 
     # 2. flex
@@ -88,8 +98,8 @@ def test_attention_correctness(action_expert, test_inputs):
     attn = action_expert.get_attention_interface()
     sdpa_out, timings["sdpa"] = _timed_forward(attn, test_inputs)
 
-    rtol = 1e-2
-    atol = 1e-2
+    rtol = 1e-3
+    atol = 1e-3
     torch.testing.assert_close(eager_out, flex_out, rtol=rtol, atol=atol)
     torch.testing.assert_close(eager_out, sdpa_out, rtol=rtol, atol=atol)
     torch.testing.assert_close(flex_out, sdpa_out, rtol=rtol, atol=atol)
