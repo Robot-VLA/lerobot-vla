@@ -1,5 +1,5 @@
 """
-uv run pytest -s tests/policies/pi0/test_convert_from_openpi_to_lerobot.py
+uv run pytest -s tests/policies/pi0/test_lerobot_vs_openpi.py
 
 Expected result:
 
@@ -27,30 +27,15 @@ import torch
 from lerobot.configs.types import FeatureType
 from lerobot.constants import ACTION, OBS_IMAGES, OBS_STATE
 from lerobot.datasets.utils import dataset_to_policy_features
+from lerobot.policies.factory import make_policy
 from lerobot.policies.pi0.configuration_pi0 import PI0Config
-from lerobot.policies.pi0.conversion_scripts.convert_pi0_to_hf_lerobot import (
-    load_gemma_expert_weights,
-    load_paligemma_weights,
-    load_projector_weights,
-)
 from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
 from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import pi0
 from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import download
-from lerobot.policies.pi0.modeling_pi0 import PI0Policy
 from tests.utils import DEVICE
 
 ATOL = 3e-2  # Absolute tolerance for action differences
 ATTN_IMPL = "sdpa"  # Attention implementation to use in the policy
-
-
-def modify_policy(orig_policy, openpi_state_dict):
-    print("Modifying policy with OpenPI state dict...")
-
-    orig_policy.to(DEVICE)
-
-    load_paligemma_weights(orig_policy, openpi_state_dict)
-    load_gemma_expert_weights(orig_policy, openpi_state_dict)
-    load_projector_weights(orig_policy, openpi_state_dict)
 
 
 @pytest.fixture
@@ -100,6 +85,7 @@ def openpi_state_dict():
 @pytest.fixture
 def lerobot_pi0(dummy_dataset_metadata, monkeypatch, openpi_state_dict):
     policy_cfg = PI0Config(
+        pretrained_path="brandonyang/pi0",
         n_action_steps=50,
         chunk_size=50,
         attention_implementation=ATTN_IMPL,
@@ -110,8 +96,7 @@ def lerobot_pi0(dummy_dataset_metadata, monkeypatch, openpi_state_dict):
         key: ft for key, ft in features.items() if key not in policy_cfg.output_features
     }
 
-    policy = PI0Policy(policy_cfg)
-    modify_policy(policy, openpi_state_dict)
+    policy = make_policy(policy_cfg, ds_meta=dummy_dataset_metadata)
 
     def mock_prepare_images(self, batch):
         images = []
