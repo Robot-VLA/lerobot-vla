@@ -1,5 +1,10 @@
 """
 uv run pytest -s tests/policies/pi0/test_attention_implementations.py
+
+Expected output:
+eager:    27.05 ms
+flex :     6.21 ms
+sdpa :     6.19 ms
 """
 
 import time
