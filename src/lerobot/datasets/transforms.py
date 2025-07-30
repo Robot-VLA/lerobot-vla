@@ -198,11 +198,12 @@ class ImageTransformsConfig:
                 type="ColorJitter",
                 kwargs={"hue": (-0.05, 0.05)},
             ),
-            "sharpness": ImageTransformConfig(
-                weight=1.0,
-                type="SharpnessJitter",
-                kwargs={"sharpness": (0.5, 1.5)},
-            ),
+            # TODO(branyang02): Uncomment this when SharpnessJitter is fixed.
+            # "sharpness": ImageTransformConfig(
+            #     weight=1.0,
+            #     type="SharpnessJitter",
+            #     kwargs={"sharpness": (0.5, 1.5)},
+            # ),
         }
     )
 
