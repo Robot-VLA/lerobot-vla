@@ -88,12 +88,13 @@ def test_attention_correctness(action_expert, test_inputs):
     attn = action_expert.get_attention_interface()
     sdpa_out, timings["sdpa"] = _timed_forward(attn, test_inputs)
 
-    # 4. compare outputs (relaxed tol)
-    tol = 1e-1
-    assert torch.allclose(eager_out, flex_out, atol=tol), "eager vs flex mismatch"
-    assert torch.allclose(eager_out, sdpa_out, atol=tol), "eager vs sdpa mismatch"
-    assert torch.allclose(flex_out, sdpa_out, atol=tol), "flex  vs sdpa mismatch"
+    rtol = 1e-2
+    atol = 1e-2
+    torch.testing.assert_close(eager_out, flex_out, rtol=rtol, atol=atol)
+    torch.testing.assert_close(eager_out, sdpa_out, rtol=rtol, atol=atol)
+    torch.testing.assert_close(flex_out, sdpa_out, rtol=rtol, atol=atol)
 
     # 5. print timings
+    print("")
     for impl, ms in timings.items():
         print(f"{impl:5s}: {ms:8.2f} ms")
