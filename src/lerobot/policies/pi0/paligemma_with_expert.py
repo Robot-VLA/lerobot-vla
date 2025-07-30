@@ -176,8 +176,11 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         self.config = config
         self.paligemma = PaliGemmaForConditionalGeneration(config=config.paligemma_config)
         self.gemma_expert = GemmaForCausalLM(config=config.gemma_expert_config)
-        # Remove unused embed_tokens
-        self.gemma_expert.model.embed_tokens = None
+        # Remove unused modules to free up memory
+        del self.gemma_expert.model.embed_tokens
+        del self.gemma_expert.lm_head
+        del self.paligemma.language_model.lm_head
+        torch.cuda.empty_cache()
 
         self.to_bfloat16_like_physical_intelligence()
         self.set_requires_grad()
@@ -216,12 +219,10 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
                 param.data = param.data.to(dtype=torch.bfloat16)
 
     def embed_image(self, image: torch.Tensor):
-        # TODO(branyang02): check dtype info
-        self.paligemma.to(dtype=torch.float32)
+        # TODO(branyang02): check dtype info and try to match with openpi
         image_outputs = self.paligemma.vision_tower(image)
         selected_image_feature = image_outputs.last_hidden_state
         image_features = self.paligemma.multi_modal_projector(selected_image_feature)
-        self.paligemma.to(dtype=torch.bfloat16)
         return image_features
 
     def embed_language_tokens(self, tokens: torch.Tensor):

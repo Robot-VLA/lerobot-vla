@@ -238,8 +238,16 @@ class BaseModelConfig(abc.ABC):
         """Returns the input specification for the model. Values are jax.ShapeDtypeStruct."""
 
     def fake_obs(self, batch_size: int = 1) -> Observation:
-        observation_spec, _ = self.inputs_spec(batch_size=batch_size)
-        return jax.tree.map(lambda x: jnp.ones(x.shape, x.dtype), observation_spec)
+        obs_spec, _ = self.inputs_spec(batch_size=batch_size)
+        obs = jax.tree_util.tree_map(lambda x: jnp.full(x.shape, 0.5, dtype=x.dtype), obs_spec)
+        obs = dataclasses.replace(
+            obs,
+            state=jnp.full(obs.state.shape, 0.3, dtype=obs.state.dtype),
+            tokenized_prompt=jnp.full(obs.tokenized_prompt.shape, 1, dtype=obs.tokenized_prompt.dtype),
+            tokenized_prompt_mask=jnp.ones_like(obs.tokenized_prompt_mask, dtype=jnp.bool_),
+            image_masks=jax.tree_util.tree_map(lambda m: jnp.ones_like(m, dtype=jnp.bool_), obs.image_masks),
+        )
+        return obs
 
     def fake_act(self, batch_size: int = 1) -> Actions:
         _, action_spec = self.inputs_spec(batch_size=batch_size)
