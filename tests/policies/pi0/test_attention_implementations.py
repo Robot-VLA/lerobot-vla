@@ -1,3 +1,7 @@
+"""
+uv run pytest -s tests/policies/pi0/test_attention_implementations.py
+"""
+
 import time
 from typing import Any, Dict
 
@@ -104,7 +108,6 @@ def test_attention_correctness(action_expert, test_inputs):
     torch.testing.assert_close(eager_out, sdpa_out, rtol=rtol, atol=atol)
     torch.testing.assert_close(flex_out, sdpa_out, rtol=rtol, atol=atol)
 
-    # 5. print timings
     print("")
     for impl, ms in timings.items():
         print(f"{impl:5s}: {ms:8.2f} ms")

@@ -1,3 +1,23 @@
+"""
+uv run pytest -s tests/policies/pi0/test_convert_from_openpi_to_lerobot.py
+
+Expected result:
+
+E           Failed: 10/1600 values differ by > 3.0e-02 (max diff=0.0329)
+E            index      lerobot      openpi      diff
+E           -------------------------------------------
+E           [0,25,9]        0.1127      0.1432      0.0305
+E           [0,26,9]        0.1022      0.1331      0.0309
+E           [0,28,9]        0.0830      0.1153      0.0323
+E           [0,29,9]        0.0849      0.1171      0.0322
+E           [0,30,9]        0.0835      0.1147      0.0312
+E           [0,31,9]        0.0848      0.1160      0.0312
+E           [0,32,9]        0.0862      0.1173      0.0311
+E           [0,46,8]       -0.1684     -0.1378      0.0307
+E           [0,47,8]       -0.1760     -0.1453      0.0307
+E           [0,49,8]       -0.1910     -0.1581      0.0329
+"""
+
 import einops
 import jax
 import numpy as np
