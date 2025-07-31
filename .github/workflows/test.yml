@@ -54,6 +54,9 @@ jobs:
         with:
           lfs: true  # Ensure LFS files are pulled
           persist-credentials: false
+      
+      - name: Initialize submodules
+        run: git submodule update --init --recursive
 
       - name: Install apt dependencies
       # portaudio19-dev is needed to install pyaudio
@@ -90,6 +93,9 @@ jobs:
           lfs: true  # Ensure LFS files are pulled
           persist-credentials: false
 
+      - name: Initialize submodules
+        run: git submodule update --init --recursive
+
       - name: Install apt dependencies
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
@@ -121,6 +127,9 @@ jobs:
         with:
           lfs: true  # Ensure LFS files are pulled
           persist-credentials: false
+
+      - name: Initialize submodules
+        run: git submodule update --init --recursive
 
       - name: Install apt dependencies
       # portaudio19-dev is needed to install pyaudio
