@@ -210,12 +210,6 @@ conflicts = [
   ],
 ]
 
-[tool.poetry]
-requires-poetry = ">=2.1"
-packages = [
-    { include = "lerobot", from = "src" }
-]
-
 [tool.ruff]
 line-length = 110
 target-version = "py310"
@@ -253,20 +247,3 @@ default.extend-ignore-identifiers-re = [
     "ser",
     "ein",
 ]
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-
-# [tool.pyright]
-# typeCheckingMode = "basic"
-# pythonVersion = "3.10"
-# pythonPlatform = "Linux"
-# extraPaths = [
-#   "src/lerobot/envs/isaaclab/IsaacLab/source/isaaclab",
-#   "src/lerobot/envs/isaaclab/IsaacLab/source/isaaclab_assets",
-#   "src/lerobot/envs/isaaclab/IsaacLab/source/isaaclab_mimic",
-#   "src/lerobot/envs/isaaclab/IsaacLab/source/isaaclab_rl",
-#  "src/lerobot/envs/isaaclab/IsaacLab/source/isaaclab_tasks",
-# ]
