@@ -43,7 +43,7 @@ IMAGE_RESOLUTION = (224, 224)
 # Data format
 #
 # Data transforms produce the model input as a nested dictionary which is later converted
-# into `Obesrvation` and `Actions` objects. See below.
+# into `Observation` and `Actions` objects. See below.
 #
 # In the dictory form, this data should look like:
 # {

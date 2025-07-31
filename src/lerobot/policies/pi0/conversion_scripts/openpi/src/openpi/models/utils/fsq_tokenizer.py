@@ -256,7 +256,7 @@ class GeGLU(Module):
     def __call__(self, inputs: Array) -> Array:
         """Applies the GeGLU activation to the inputs.
         Args:
-            inputs: the nd-array to apply the GeGLU activation function to.
+            inputs: the np-array to apply the GeGLU activation function to.
         Returns:
             The transformed input.
         """
