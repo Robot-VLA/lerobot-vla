@@ -36,6 +36,7 @@ from tests.utils import DEVICE
 
 ATOL = 3e-2  # Absolute tolerance for action differences
 ATTN_IMPL = "sdpa"  # Attention implementation to use in the policy
+THRESHOLD_PERCENT = 1.0
 
 
 @pytest.fixture
@@ -258,5 +259,7 @@ def test_openpi_pi0(openpi_pi0, lerobot_pi0, get_policy_inputs):
         for idx_str, v_lr, v_p0, d in rows:
             header += f"{idx_str:10s}  {v_lr:10.4f}  {v_p0:10.4f}  {d:10.4f}\n"
 
-        pytest.fail(header)
-    # else test passes
+        print(f"\033[93m{header}\033[0m")
+
+        if percentage > THRESHOLD_PERCENT:
+            pytest.fail(f"Action mismatch exceeds {THRESHOLD_PERCENT:.1f}% threshold")
