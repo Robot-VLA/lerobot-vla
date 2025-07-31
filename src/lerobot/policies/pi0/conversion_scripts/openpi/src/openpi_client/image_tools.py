@@ -31,7 +31,9 @@ def resize_with_pad(images: np.ndarray, height: int, width: int, method=Image.BI
     original_shape = images.shape
 
     images = images.reshape(-1, *original_shape[-3:])
-    resized = np.stack([_resize_with_pad_pil(Image.fromarray(im), height, width, method=method) for im in images])
+    resized = np.stack(
+        [_resize_with_pad_pil(Image.fromarray(im), height, width, method=method) for im in images]
+    )
     return resized.reshape(*original_shape[:-3], *resized.shape[-3:])
 
 

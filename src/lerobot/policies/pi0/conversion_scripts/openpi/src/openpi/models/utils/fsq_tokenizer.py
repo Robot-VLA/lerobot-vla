@@ -76,7 +76,9 @@ class FsqCodebook(nn.Module):
         """
         Get bins per dimension according to the Lookup-Free Quantization paper (2 bins per dimension)
         """
-        assert target_codebook_size & (target_codebook_size - 1) == 0, "Codebook size should be a power of two for LFQ"
+        assert target_codebook_size & (target_codebook_size - 1) == 0, (
+            "Codebook size should be a power of two for LFQ"
+        )
 
         return (2,) * int(math.log2(target_codebook_size))
 

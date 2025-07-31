@@ -67,7 +67,9 @@ class RunningStats:
 
         # Update running mean and mean of squares.
         self._mean += (batch_mean - self._mean) * (num_elements / self._count)
-        self._mean_of_squares += (batch_mean_of_squares - self._mean_of_squares) * (num_elements / self._count)
+        self._mean_of_squares += (batch_mean_of_squares - self._mean_of_squares) * (
+            num_elements / self._count
+        )
 
         self._update_histograms(batch)
 

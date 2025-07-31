@@ -40,7 +40,9 @@ class DroidRldsDataset:
         tf.config.set_visible_devices([], "GPU")
 
         builder = tfds.builder("droid", data_dir=data_dir)
-        dataset = dl.DLataset.from_rlds(builder, split="train", shuffle=shuffle, num_parallel_reads=num_parallel_reads)
+        dataset = dl.DLataset.from_rlds(
+            builder, split="train", shuffle=shuffle, num_parallel_reads=num_parallel_reads
+        )
 
         # Filter out any unsuccessful trajectories -- we use the file name to check this
         dataset = dataset.filter(
@@ -121,7 +123,9 @@ class DroidRldsDataset:
             """
             if action_space == DroidActionSpace.JOINT_POSITION:
                 # Compute delta to first position in action chunk
-                return tf.reduce_any(tf.abs(traj["actions"][: action_chunk_size // 2] - traj["actions"][:1]) > 1e-3)
+                return tf.reduce_any(
+                    tf.abs(traj["actions"][: action_chunk_size // 2] - traj["actions"][:1]) > 1e-3
+                )
             return tf.reduce_any(tf.abs(traj["actions"][: action_chunk_size // 2]) > 1e-3)
 
         dataset = dataset.filter(filter_idle)
