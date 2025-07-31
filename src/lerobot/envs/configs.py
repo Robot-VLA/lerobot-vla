@@ -56,9 +56,9 @@ class IsaacLabEnvConfig(EnvConfig):
     features: dict[str, PolicyFeature] = field(
         default_factory=lambda: {
             "action": PolicyFeature(type=FeatureType.ACTION, shape=(8,)),
-            "observation.images.external_cam": PolicyFeature(type=FeatureType.VISUAL, shape=(128, 128, 3)),
-            "observation.images.wrist_cam": PolicyFeature(type=FeatureType.VISUAL, shape=(128, 128, 3)),
-            "observation.state": PolicyFeature(type=FeatureType.STATE, shape=(18,)),
+            "observation.images.external_cam": PolicyFeature(type=FeatureType.VISUAL, shape=(720, 1280, 3)),
+            "observation.images.wrist_cam": PolicyFeature(type=FeatureType.VISUAL, shape=(720, 1280, 3)),
+            "observation.state": PolicyFeature(type=FeatureType.STATE, shape=(8,)),
         }
     )
     features_map: dict[str, str] = field(
