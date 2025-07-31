@@ -1,6 +1,16 @@
+"""
+uv run src/lerobot/policies/pi0/conversion_scripts/convert_pi0_to_hf_lerobot.py
+
+"""
+
+import json
+import os
+
 import numpy as np
 import torch
 
+from lerobot.configs.types import FeatureType, PolicyFeature
+from lerobot.constants import ACTION, OBS_IMAGES, OBS_STATE
 from lerobot.policies.pi0.configuration_pi0 import PI0Config
 from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
 from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import download
@@ -449,11 +459,42 @@ def load_projector_weights(orig_policy: PI0Policy, openpi_state_dict: dict):
 
 
 if __name__ == "__main__":
+    OBS_SIZE = 8
+    ACTION_DIM = 8
+
+    assets_path = download.maybe_download("gs://openpi-assets/checkpoints/pi0_droid/assets")
+    with open(os.path.join(assets_path, "droid/norm_stats.json"), "r") as f:
+        norm_stats = json.load(f)
+
+    dataset_stats = {
+        OBS_STATE: {
+            "mean": torch.tensor(norm_stats["norm_stats"]["state"]["mean"][:OBS_SIZE], dtype=torch.float32),
+            "std": torch.tensor(norm_stats["norm_stats"]["state"]["std"][:OBS_SIZE], dtype=torch.float32),
+        },
+        ACTION: {
+            "mean": torch.tensor(
+                norm_stats["norm_stats"]["actions"]["mean"][:ACTION_DIM], dtype=torch.float32
+            ),
+            "std": torch.tensor(norm_stats["norm_stats"]["actions"]["std"][:ACTION_DIM], dtype=torch.float32),
+        },
+    }
+
     policy_cfg = PI0Config()
-    policy = PI0Policy(policy_cfg)
+    features = {
+        ACTION: PolicyFeature(type=FeatureType.ACTION, shape=(ACTION_DIM,)),
+        OBS_STATE: PolicyFeature(type=FeatureType.STATE, shape=(OBS_SIZE,)),
+        f"{OBS_IMAGES}.wrist_cam": PolicyFeature(type=FeatureType.VISUAL, shape=(3, 224, 224)),
+        f"{OBS_IMAGES}.external_cam": PolicyFeature(type=FeatureType.VISUAL, shape=(3, 224, 224)),
+    }
+    policy_cfg.output_features = {key: ft for key, ft in features.items() if ft.type is FeatureType.ACTION}
+    policy_cfg.input_features = {
+        key: ft for key, ft in features.items() if key not in policy_cfg.output_features
+    }
+
+    policy = PI0Policy(policy_cfg, dataset_stats=dataset_stats)
 
     openpi_state_dict = _model.restore_params(
-        download.maybe_download("gs://openpi-assets/checkpoints/pi0_base/params")
+        download.maybe_download("gs://openpi-assets/checkpoints/pi0_droid/params")
     )
 
     # openpi weights are float32, so we store the policy in float32 on huggingface
@@ -464,7 +505,7 @@ if __name__ == "__main__":
     load_projector_weights(policy, openpi_state_dict)
 
     policy.save_pretrained(
-        save_directory="./pi0-checkpoint",
-        repo_id="brandonyang/pi0",
+        save_directory="./pi0_droid",
+        repo_id="brandonyang/pi0_droid",
         push_to_hub=True,
     )
