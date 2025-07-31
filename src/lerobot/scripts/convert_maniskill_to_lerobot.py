@@ -4,7 +4,19 @@ In order to retrieve the camera observations, we use obs_mode: str = "sensor_dat
 
 To use this file, make sure DATASET_FEATURES match the observation and action spaces of the environment you are trying to replay.
 
+The following environments support wrist cam:
+- PlugCharger
+- PegInseration
+
+
 Example usage:
+uv run python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
+--repo_id brandonyang/LiftPegUprightRL-v1 \
+--task_description "Pick up a orange-white peg and insert the orange end into the box with a hole in it." \
+--traj_path <TRAJECTORY_PATH>/PegInsertionSide-v1/rl/trajectory.h5 \
+--upload_to_hub 
+
+
 python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
 --repo_id brandonyang/StackCube-v1 \
 --task_description "Stack the red cube on top of the green cube." \
