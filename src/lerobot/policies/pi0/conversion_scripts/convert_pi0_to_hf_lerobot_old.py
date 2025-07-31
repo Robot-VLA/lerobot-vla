@@ -13,6 +13,8 @@
 # limitations under the License.
 
 """
+DEPRECATED: This is the original conversion script for pi0 parameters from HuggingFace.
+
 Convert pi0 parameters from Jax to Pytorch
 
 Follow [README of openpi](https://github.com/Physical-Intelligence/openpi) to create a new environment
