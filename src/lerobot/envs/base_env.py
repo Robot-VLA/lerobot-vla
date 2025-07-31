@@ -201,6 +201,9 @@ class LeRobotBaseEnv(abc.ABC):
     def _move_to_device(
         self, item: dict | torch.Tensor | np.ndarray, device: str | torch.device
     ) -> dict | torch.Tensor:
+        """
+        Move an item (tensor, numpy array, dict, or list) to the specified device.
+        """
         device = torch.device(device) if isinstance(device, str) else device
 
         if isinstance(item, torch.Tensor):
