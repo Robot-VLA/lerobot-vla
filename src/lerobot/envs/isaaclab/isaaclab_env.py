@@ -3,6 +3,7 @@ TODO(branyang02): WIP, creating IsaaclabEnv subclass for LeRobotEnv
 """
 
 import argparse
+import logging
 from typing import Any
 
 import einops
@@ -70,13 +71,11 @@ class IsaacLabEnv(LeRobotBaseEnv):
     @classmethod
     def create_env(cls, config: IsaacLabEnvConfig, num_envs: int, use_async_envs: bool) -> "IsaacLabEnv":
         if num_envs > 1:
-            raise ValueError(
-                "IsaacLabEnv does not support multiple environments. Please set `num_envs=1` in the config."
-            )
+            logging.warning("IsaacLabEnv does not support multiple environments. Using num_envs=1 instead.")
+            num_envs = 1
         if use_async_envs:
-            raise ValueError(
-                "IsaacLabEnv does not support asynchronous environments. "
-                "Please set `use_async_envs=False` in the config."
+            logging.warning(
+                "IsaacLabEnv does not support async environments. Using synchronous mode instead."
             )
 
         from isaaclab.app import AppLauncher

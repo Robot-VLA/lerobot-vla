@@ -16,7 +16,15 @@
 
 
 from lerobot.envs.base_env import LeRobotBaseEnv
-from lerobot.envs.configs import AlohaEnv, EnvConfig, HILEnvConfig, ManiSkillEnvConfig, PushtEnv, XarmEnv
+from lerobot.envs.configs import (
+    AlohaEnv,
+    EnvConfig,
+    HILEnvConfig,
+    IsaacLabEnvConfig,
+    ManiSkillEnvConfig,
+    PushtEnv,
+    XarmEnv,
+)
 
 
 def get_env_class(name: str) -> LeRobotBaseEnv:
@@ -49,6 +57,8 @@ def make_env_config(env_type: str, **kwargs) -> EnvConfig:
         return HILEnvConfig(**kwargs)
     elif env_type == "maniskill":
         return ManiSkillEnvConfig(**kwargs)
+    elif env_type == "isaaclab":
+        return IsaacLabEnvConfig(**kwargs)
     else:
         raise ValueError(f"Policy type '{env_type}' is not available.")
 
