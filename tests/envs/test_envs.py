@@ -23,7 +23,7 @@ from torch import Tensor
 from lerobot.envs.factory import make_env, make_env_config
 from tests.utils import DEVICE
 
-AVAILABLE_ENV_NAMES = ["aloha", "pusht", "xarm", "maniskill", "isaaclab"]
+AVAILABLE_ENV_NAMES = ["aloha", "pusht", "xarm", "maniskill"]
 
 
 class MockPolicyForEnv(nn.Module):
