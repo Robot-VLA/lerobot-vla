@@ -73,8 +73,10 @@ dependencies = [
     # TODO(branyang02): torchcodec fails in curr docker due to ffmpeg issues.
     # "torchcodec>=0.2.1; sys_platform != 'win32' and (sys_platform != 'linux' or (platform_machine != 'aarch64' and platform_machine != 'arm64' and platform_machine != 'armv7l')) and (sys_platform != 'darwin' or platform_machine != 'x86_64')",
     "torchvision>=0.20.0", # IsaacLab(v2.1.0, 3b6d615) requires torch==2.5.1 which requires torchvision==0.20.1
-    "wandb>=0.12.21", # "wandb>=0.16.3",
+    "wandb>=0.16.3",
     "zarr>=2.17.0",
+    "ruff>=0.12.7",
+    "protobuf==5.29.0",
 ]
 
 [project.optional-dependencies]
@@ -137,7 +139,7 @@ isaaclab = [
   "tyro>=0.9.21",
   "mediapy>=1.2.4",
   "numpy<2",
-  "wandb==0.12.21" # TODO(branyang02): Check why this is needed
+  "wandb==0.18.0"
 ]
 
 [tool.uv.sources]
