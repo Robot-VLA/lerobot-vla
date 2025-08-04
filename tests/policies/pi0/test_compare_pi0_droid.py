@@ -1,6 +1,11 @@
 """
 uv run pytest -s tests/policies/pi0/test_compare_pi0_droid.py
 
+- This file uses mocked make_droid_example() and compare generation results for lerobot's pytorch implementation
+and the original openpi implementation. 
+- This file also tests the end-to-end normalization and unnormalization logic.
+
+
 Expected result:
 
 3/80 (3.75) values differ by > 3.0e-02 (max diff=0.0468)
