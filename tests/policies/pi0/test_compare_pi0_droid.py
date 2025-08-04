@@ -2,7 +2,7 @@
 uv run pytest -s tests/policies/pi0/test_compare_pi0_droid.py
 
 - This file uses mocked make_droid_example() and compare generation results for lerobot's pytorch implementation
-and the original openpi implementation. 
+and the original openpi implementation.
 - This file also tests the end-to-end normalization and unnormalization logic.
 
 
@@ -83,9 +83,8 @@ def openpi_pi0():
 @pytest.fixture
 def lerobot_pi0(monkeypatch, dummy_dataset_metadata):
     policy_cfg = PI0Config(
-        pretrained_path="/PFS/output/yangyifan/cache/lerobot/brandonyang/pi0-droid-checkpoint",
-        n_action_steps=10,
-        chunk_size=10,
+        pretrained_path="brandonyang/pi0_droid",
+        n_action_steps=10,  # Default values for "pi0_droid" in openpi
         attention_implementation="sdpa",
     )
     features = dataset_to_policy_features(dummy_dataset_metadata.features)
