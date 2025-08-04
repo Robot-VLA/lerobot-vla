@@ -11,8 +11,6 @@ Expected result:
 [0,9,6]         0.2025      0.1557      0.0468
 """
 
-import dataclasses
-
 import einops
 import jax
 import numpy as np
@@ -22,16 +20,12 @@ import torch
 from lerobot.configs.types import FeatureType
 from lerobot.constants import OBS_IMAGES, OBS_STATE
 from lerobot.datasets.utils import dataset_to_policy_features
-from lerobot.envs.configs import IsaacLabEnvConfig
 from lerobot.policies.factory import make_policy
 from lerobot.policies.pi0.configuration_pi0 import PI0Config
-from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
 from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies import droid_policy
 from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.policies import policy_config as _policy_config
 from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.shared import download
 from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import config as _config
-from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.training import data_loader as _data_loader
-from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi_client import image_tools
 from tests.utils import DEVICE
 
 ATOL = 3e-2  # Absolute tolerance for action differences
