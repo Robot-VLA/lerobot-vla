@@ -120,7 +120,7 @@ class IsaacLabEnv(LeRobotBaseEnv):
 
     def _reset(self, seeds: list[int] | None = None) -> tuple[dict, dict]:
         reset_results = self.isaaclab_env.reset(seed=seeds[0])  # isaaclab only supports single seed reset
-        observation, info = (self._move_to_device(res, self.env_device) for res in reset_results)
+        observation, info = (self._move_to_device(res, self.config.env_device) for res in reset_results)
         observation = self._preprocess_observation(observation, task_description=self.config.task_description)
         return observation, info
 
@@ -132,7 +132,7 @@ class IsaacLabEnv(LeRobotBaseEnv):
     ) -> tuple[dict, torch.Tensor, torch.Tensor, torch.Tensor]:
         step_results = self.isaaclab_env.step(action)
         observation, reward, terminated, truncated, info = (
-            self._move_to_device(res, self.env_device) for res in step_results
+            self._move_to_device(res, self.config.env_device) for res in step_results
         )
         observation = self._preprocess_observation(observation, task_description=self.config.task_description)
 
@@ -140,11 +140,11 @@ class IsaacLabEnv(LeRobotBaseEnv):
         if "final_info" in info:
             successes = torch.tensor(
                 [info["is_success"] if info is not None else False for info in info["final_info"]],
-                device=self.env_device,
+                device=self.config.env_device,
                 dtype=torch.bool,
             )
         else:
-            successes = torch.zeros(self.num_envs, device=self.env_device, dtype=torch.bool)
+            successes = torch.zeros(self.num_envs, device=self.config.env_device, dtype=torch.bool)
 
         done = terminated | truncated | done
 

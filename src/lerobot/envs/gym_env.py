@@ -106,7 +106,7 @@ class GymEnv(LeRobotBaseEnv):
 
     def _reset(self, seeds: list[int] | None = None) -> tuple[dict, dict]:
         reset_results = self.gym_env.reset(seed=seeds)
-        observation, info = (self._move_to_device(res, self.env_device) for res in reset_results)
+        observation, info = (self._move_to_device(res, self.config.env_device) for res in reset_results)
         observation = self._preprocess_observation(observation)
         return observation, info
 
@@ -131,18 +131,18 @@ class GymEnv(LeRobotBaseEnv):
 
         step_results = self.gym_env.step(action)
         observation, reward, terminated, truncated, info = (
-            self._move_to_device(res, self.env_device) for res in step_results
+            self._move_to_device(res, self.config.env_device) for res in step_results
         )
         observation = self._preprocess_observation(observation)
 
         if "final_info" in info:
             successes = torch.tensor(
                 [info["is_success"] if info is not None else False for info in info["final_info"]],
-                device=self.env_device,
+                device=self.config.env_device,
                 dtype=torch.bool,
             )
         else:
-            successes = torch.zeros(self.num_envs, device=self.env_device, dtype=torch.bool)
+            successes = torch.zeros(self.num_envs, device=self.config.env_device, dtype=torch.bool)
 
         done = terminated | truncated | done
 

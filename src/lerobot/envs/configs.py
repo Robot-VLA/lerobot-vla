@@ -32,6 +32,7 @@ class EnvConfig(draccus.ChoiceRegistry, abc.ABC):
     fps: int = 30
     features: dict[str, PolicyFeature] = field(default_factory=dict)
     features_map: dict[str, str] = field(default_factory=dict)
+    env_device: str = "cpu"
 
     @property
     def type(self) -> str:
@@ -53,6 +54,7 @@ class IsaacLabEnvConfig(EnvConfig):
     enable_cameras: bool = True
     headless: bool = True
     use_fabric: bool = True
+    env_device: str = "cuda"
     features: dict[str, PolicyFeature] = field(
         default_factory=lambda: {
             "action": PolicyFeature(type=FeatureType.ACTION, shape=(8,)),

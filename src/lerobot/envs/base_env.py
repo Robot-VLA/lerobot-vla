@@ -17,7 +17,7 @@ from lerobot.utils.utils import inside_slurm
 @dataclass
 class RolloutResult:
     """
-    All data should be in LeRobotBaseEnv.env_device, which is "cpu" by default.
+    All data should be in LeRobotBaseEnv.config.env_device, which is "cpu" by default.
     """
 
     action: torch.Tensor  # (batch, sequence, action_dim)
@@ -33,7 +33,6 @@ class LeRobotBaseEnv(abc.ABC):
     def __init__(self, config: EnvConfig, num_envs: int):
         self.config = config
         self.num_envs = num_envs
-        self.env_device = "cpu"
 
     @property
     @abc.abstractmethod
@@ -136,10 +135,10 @@ class LeRobotBaseEnv(abc.ABC):
         # Reset the policy and environments.
         policy.reset()
         observation, info = self._reset(seeds=seeds)
-        all_frames.append(self._render().to(self.env_device))
+        all_frames.append(self._render().to("cpu"))
 
         step = 0
-        done = torch.tensor([False] * self.num_envs, dtype=torch.bool, device=self.env_device)
+        done = torch.tensor([False] * self.num_envs, dtype=torch.bool, device=self.config.env_device)
         progbar = trange(
             self._max_steps,
             desc=f"Running rollout with at most {self._max_steps} steps",
@@ -161,9 +160,9 @@ class LeRobotBaseEnv(abc.ABC):
                 action = policy.select_action(observation)
 
             observation, reward, done, successes = self._step(action, done)
-            all_frames.append(self._render().to(self.env_device))
+            all_frames.append(self._render().to("cpu"))
             if step + 1 >= self._max_steps:  # Force done if we reach max steps.
-                done = torch.tensor([True] * self.num_envs, dtype=torch.bool, device=self.env_device)
+                done = torch.tensor([True] * self.num_envs, dtype=torch.bool, device=self.config.env_device)
 
             all_actions.append(action)
             all_rewards.append(reward)

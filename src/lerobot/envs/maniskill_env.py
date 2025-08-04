@@ -59,7 +59,7 @@ class ManiSkillEnv(LeRobotBaseEnv):
 
     def _reset(self, seeds: list[int] | None = None) -> tuple[dict, dict]:
         reset_results = self.maniskill_env.reset(seed=seeds)
-        observation, info = (self._move_to_device(res, self.env_device) for res in reset_results)
+        observation, info = (self._move_to_device(res, self.config.env_device) for res in reset_results)
         observation = self._preprocess_observation(
             raw_observation=observation, task_description=self.config.task_description
         )
@@ -77,7 +77,7 @@ class ManiSkillEnv(LeRobotBaseEnv):
 
         step_results = self.maniskill_env.step(action)
         observation, reward, terminated, truncated, info = (
-            self._move_to_device(res, self.env_device) for res in step_results
+            self._move_to_device(res, self.config.env_device) for res in step_results
         )
 
         # NOTE: truncated terminates in self.maniskill_env._max_episode_steps, which is often shorter than
