@@ -39,7 +39,7 @@ class Policy(BasePolicy):
         self._metadata = metadata or {}
 
     @override
-    def infer(self, obs: dict) -> dict:  # type: ignore[misc]
+    def infer(self, obs: dict, rng: at.KeyArrayLike | None = None) -> dict:  # type: ignore[misc]
         # Make a copy since transformations may modify the inputs in place.
         inputs = jax.tree.map(lambda x: x, obs)
         inputs = self._input_transform(inputs)
@@ -47,7 +47,10 @@ class Policy(BasePolicy):
         inputs = jax.tree.map(lambda x: jnp.asarray(x)[np.newaxis, ...], inputs)
 
         start_time = time.monotonic()
-        self._rng, sample_rng = jax.random.split(self._rng)
+        if rng is not None:
+            sample_rng = rng
+        else:
+            self._rng, sample_rng = jax.random.split(self._rng)
         outputs = {
             "state": inputs["state"],
             "actions": self._sample_actions(
