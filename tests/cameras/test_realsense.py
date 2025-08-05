@@ -104,6 +104,7 @@ def test_read():
     assert isinstance(img, np.ndarray)
 
 
+@pytest.mark.skip("Skipping test: pyrealsense2 version > 2.55.1.6486")
 def test_read_depth():
     config = RealSenseCameraConfig(serial_number_or_name="042", width=640, height=480, fps=30, use_depth=True)
     camera = RealSenseCamera(config)

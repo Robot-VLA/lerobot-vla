@@ -13,11 +13,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import importlib
 
-import gymnasium as gym
 
-from lerobot.envs.configs import AlohaEnv, EnvConfig, HILEnvConfig, PushtEnv, XarmEnv
+from lerobot.envs.base_env import LeRobotBaseEnv
+from lerobot.envs.configs import (
+    AlohaEnv,
+    EnvConfig,
+    HILEnvConfig,
+    IsaacLabEnvConfig,
+    ManiSkillEnvConfig,
+    PushtEnv,
+    XarmEnv,
+)
+
+
+def get_env_class(name: str) -> LeRobotBaseEnv:
+    """Get the environment class by name."""
+    if name == "aloha" or name == "pusht" or name == "xarm" or name == "hil":
+        from lerobot.envs.gym_env import GymEnv
+
+        return GymEnv
+    elif name == "maniskill":
+        from lerobot.envs.maniskill_env import ManiSkillEnv
+
+        return ManiSkillEnv
+    elif name == "isaaclab":
+        # raise NotImplementedError("IsaacLabEnv is still WIP. Please use the GymEnv or ManiSkillEnv for now.")
+        from lerobot.envs.isaaclab.isaaclab_env import IsaacLabEnv
+
+        return IsaacLabEnv
+    else:
+        raise ValueError(f"Environment type '{name}' is not available.")
 
 
 def make_env_config(env_type: str, **kwargs) -> EnvConfig:
@@ -29,43 +55,19 @@ def make_env_config(env_type: str, **kwargs) -> EnvConfig:
         return XarmEnv(**kwargs)
     elif env_type == "hil":
         return HILEnvConfig(**kwargs)
+    elif env_type == "maniskill":
+        return ManiSkillEnvConfig(**kwargs)
+    elif env_type == "isaaclab":
+        return IsaacLabEnvConfig(**kwargs)
     else:
         raise ValueError(f"Policy type '{env_type}' is not available.")
 
 
-def make_env(cfg: EnvConfig, n_envs: int = 1, use_async_envs: bool = False) -> gym.vector.VectorEnv | None:
-    """Makes a gym vector environment according to the config.
-
-    Args:
-        cfg (EnvConfig): the config of the environment to instantiate.
-        n_envs (int, optional): The number of parallelized env to return. Defaults to 1.
-        use_async_envs (bool, optional): Whether to return an AsyncVectorEnv or a SyncVectorEnv. Defaults to
-            False.
-
-    Raises:
-        ValueError: if n_envs < 1
-        ModuleNotFoundError: If the requested env package is not installed
-
-    Returns:
-        gym.vector.VectorEnv: The parallelized gym.env instance.
-    """
-    if n_envs < 1:
-        raise ValueError("`n_envs must be at least 1")
-
-    package_name = f"gym_{cfg.type}"
-
-    try:
-        importlib.import_module(package_name)
-    except ModuleNotFoundError as e:
-        print(f"{package_name} is not installed. Please install it with `pip install 'lerobot[{cfg.type}]'`")
-        raise e
-
-    gym_handle = f"{package_name}/{cfg.task}"
-
-    # batched version of the env that returns an observation of shape (b, c)
-    env_cls = gym.vector.AsyncVectorEnv if use_async_envs else gym.vector.SyncVectorEnv
-    env = env_cls(
-        [lambda: gym.make(gym_handle, disable_env_checker=True, **cfg.gym_kwargs) for _ in range(n_envs)]
+def make_env(cfg: EnvConfig, n_envs: int = 1, use_async_envs: bool = False) -> LeRobotBaseEnv:
+    env_cls = get_env_class(cfg.type)
+    env = env_cls.create_env(
+        config=cfg,
+        num_envs=n_envs,
+        use_async_envs=use_async_envs,
     )
-
     return env

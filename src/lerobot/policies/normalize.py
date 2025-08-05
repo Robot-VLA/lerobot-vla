@@ -155,8 +155,16 @@ class Normalize(nn.Module):
         batch = dict(batch)  # shallow copy avoids mutating the input batch
         for key, ft in self.features.items():
             if key not in batch:
-                # FIXME(aliberts, rcadene): This might lead to silent fail!
-                continue
+                raise KeyError(
+                    f"Key '{key}' not found in the input batch. "
+                    "Make sure the input batch contains all expected features."
+                )
+            if ft.type in [FeatureType.STATE, FeatureType.VISUAL] and ft.shape != batch[key].shape[1:]:
+                # ignore batch dimension
+                raise ValueError(
+                    f"Shape mismatch for key '{key}': expected {ft.shape}, "
+                    f"but got {batch[key].shape[1:]} with batch size {batch[key].shape[0]}. Only non-batch dimensions must match."
+                )
 
             norm_mode = self.norm_map.get(ft.type, NormalizationMode.IDENTITY)
             if norm_mode is NormalizationMode.IDENTITY:
@@ -229,7 +237,16 @@ class Unnormalize(nn.Module):
         batch = dict(batch)  # shallow copy avoids mutating the input batch
         for key, ft in self.features.items():
             if key not in batch:
-                continue
+                raise KeyError(
+                    f"Key '{key}' not found in the input batch. "
+                    "Make sure the input batch contains all expected features."
+                )
+            if ft.type in [FeatureType.STATE, FeatureType.VISUAL] and ft.shape != batch[key].shape[1:]:
+                # ignore batch dimension
+                raise ValueError(
+                    f"Shape mismatch for key '{key}': expected {ft.shape}, "
+                    f"but got {batch[key].shape[1:]} with batch size {batch[key].shape[0]}. Only non-batch dimensions must match."
+                )
 
             norm_mode = self.norm_map.get(ft.type, NormalizationMode.IDENTITY)
             if norm_mode is NormalizationMode.IDENTITY:

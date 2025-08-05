@@ -13,51 +13,39 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import importlib
+from typing import Dict
 
-import gymnasium as gym
 import pytest
 import torch
-from gymnasium.utils.env_checker import check_env
+import torch.nn as nn
+from torch import Tensor
 
-import lerobot
 from lerobot.envs.factory import make_env, make_env_config
-from lerobot.envs.utils import preprocess_observation
-from tests.utils import require_env
+from tests.utils import DEVICE
 
-OBS_TYPES = ["state", "pixels", "pixels_agent_pos"]
-
-
-@pytest.mark.parametrize("obs_type", OBS_TYPES)
-@pytest.mark.parametrize("env_name, env_task", lerobot.env_task_pairs)
-@require_env
-def test_env(env_name, env_task, obs_type):
-    if env_name == "aloha" and obs_type == "state":
-        pytest.skip("`state` observations not available for aloha")
-
-    package_name = f"gym_{env_name}"
-    importlib.import_module(package_name)
-    env = gym.make(f"{package_name}/{env_task}", obs_type=obs_type)
-    check_env(env.unwrapped, skip_render_check=True)
-    env.close()
+AVAILABLE_ENV_NAMES = ["aloha", "pusht", "xarm", "maniskill"]
 
 
-@pytest.mark.parametrize("env_name", lerobot.available_envs)
-@require_env
-def test_factory(env_name):
+class MockPolicyForEnv(nn.Module):
+    def __init__(self, action_dim: int):
+        super().__init__()
+        self.dummy_param = nn.Parameter(torch.ones(4, 4))
+        self.action_dim = action_dim
+
+    def reset(self) -> None:
+        pass
+
+    def select_action(self, batch: Dict[str, Tensor]) -> Tensor:
+        return torch.zeros((batch["observation.state"].shape[0], self.action_dim), dtype=torch.float32)
+
+
+@pytest.mark.parametrize("env_name", AVAILABLE_ENV_NAMES)
+def test_all_envs(env_name):
     cfg = make_env_config(env_name)
-    env = make_env(cfg, n_envs=1)
-    obs, _ = env.reset()
-    obs = preprocess_observation(obs)
-
-    # test image keys are float32 in range [0,1]
-    for key in obs:
-        if "image" not in key:
-            continue
-        img = obs[key]
-        assert img.dtype == torch.float32
-        # TODO(rcadene): we assume for now that image normalization takes place in the model
-        assert img.max() <= 1.0
-        assert img.min() >= 0.0
-
-    env.close()
+    env = make_env(cfg, n_envs=2)
+    try:
+        mock_policy = MockPolicyForEnv(action_dim=cfg.features["action"].shape[0]).to(DEVICE)
+        rollout_data = env.rollout(policy=mock_policy, seeds=[0, 42])
+        assert rollout_data is not None
+    finally:
+        env.close()

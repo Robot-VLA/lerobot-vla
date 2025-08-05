@@ -49,6 +49,8 @@ class PreTrainedConfig(draccus.ChoiceRegistry, HubMixin, abc.ABC):
             the original scale.
     """
 
+    pretrained_path: Path | None = None
+
     n_obs_steps: int = 1
     normalization_mapping: dict[str, NormalizationMode] = field(default_factory=dict)
 
@@ -71,7 +73,6 @@ class PreTrainedConfig(draccus.ChoiceRegistry, HubMixin, abc.ABC):
     license: str | None = None
 
     def __post_init__(self):
-        self.pretrained_path = None
         if not self.device or not is_torch_device_available(self.device):
             auto_device = auto_select_torch_device()
             logging.warning(f"Device '{self.device}' is not available. Switching to '{auto_device}'.")

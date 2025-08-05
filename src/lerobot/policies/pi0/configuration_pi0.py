@@ -68,7 +68,7 @@ class PI0Config(PreTrainedConfig):
 
     # Attention utils
     use_cache: bool = True
-    attention_implementation: str = "eager"  # or fa2, flex
+    attention_implementation: str = "sdpa"  # or fa2, flex, eager
 
     # Finetuning settings
     freeze_vision_encoder: bool = True

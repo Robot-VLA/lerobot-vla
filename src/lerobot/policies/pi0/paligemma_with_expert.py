@@ -162,9 +162,9 @@ class PaliGemmaWithExpertConfig(PretrainedConfig):
                 "You set `freeze_vision_encoder=False` and `train_expert_only=True` which are not compatible."
             )
 
-        if self.attention_implementation not in ["eager", "fa2", "flex"]:
+        if self.attention_implementation not in ["sdpa", "eager", "fa2", "flex"]:
             raise ValueError(
-                f"Wrong value provided for `attention_implementation` ({self.attention_implementation}). Expected 'eager', 'fa2' or 'flex'."
+                f"Wrong value provided for `attention_implementation` ({self.attention_implementation}). Expected 'sdpa', 'eager', 'fa2' or 'flex'."
             )
 
 
@@ -176,8 +176,11 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         self.config = config
         self.paligemma = PaliGemmaForConditionalGeneration(config=config.paligemma_config)
         self.gemma_expert = GemmaForCausalLM(config=config.gemma_expert_config)
-        # Remove unused embed_tokens
-        self.gemma_expert.model.embed_tokens = None
+        # Remove unused modules to free up memory
+        del self.gemma_expert.model.embed_tokens
+        del self.gemma_expert.lm_head
+        del self.paligemma.language_model.lm_head
+        torch.cuda.empty_cache()
 
         self.to_bfloat16_like_physical_intelligence()
         self.set_requires_grad()
@@ -216,14 +219,14 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
                 param.data = param.data.to(dtype=torch.bfloat16)
 
     def embed_image(self, image: torch.Tensor):
-        # Handle different transformers versions
-        if hasattr(self.paligemma, "get_image_features"):
-            return self.paligemma.get_image_features(image)
-        else:
-            return self.paligemma.model.get_image_features(image)
+        # TODO(branyang02): check dtype info and try to match with openpi
+        image_outputs = self.paligemma.vision_tower(image)
+        selected_image_feature = image_outputs.last_hidden_state
+        image_features = self.paligemma.multi_modal_projector(selected_image_feature)
+        return image_features
 
     def embed_language_tokens(self, tokens: torch.Tensor):
-        return self.paligemma.language_model.embed_tokens(tokens)
+        return self.paligemma.language_model.model.embed_tokens(tokens)
 
     # TODO: break down this huge forward into modules or functions
     def forward(
@@ -235,7 +238,7 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         use_cache: Optional[bool] = None,
         fill_kv_cache: Optional[bool] = None,
     ):
-        models = [self.paligemma.language_model, self.gemma_expert.model]
+        models = [self.paligemma.language_model.model, self.gemma_expert.model]
 
         for hidden_states in inputs_embeds:
             # TODO this is very inefficient
@@ -353,12 +356,21 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         return outputs_embeds, past_key_values
 
     def get_attention_interface(self):
+        # Default to SDPA implementation when in training mode
+        if self.training:
+            return self.sdpa_attention_forward
+
+        # For inference, follow the configuration setting
         if self.config.attention_implementation == "fa2":
             attention_interface = self.flash_attention_forward
         elif self.config.attention_implementation == "flex":
             attention_interface = flex_attention_forward
-        else:
+        elif self.config.attention_implementation == "sdpa":
+            attention_interface = self.sdpa_attention_forward
+        elif self.config.attention_implementation == "eager":
             attention_interface = self.eager_attention_forward
+        else:
+            attention_interface = self.sdpa_attention_forward
         return attention_interface
 
     def flash_attention_forward(
@@ -416,6 +428,72 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
 
         att_output = att_output.permute(0, 2, 1, 3)
         # we use -1 because sequence length can change
+        att_output = att_output.reshape(batch_size, -1, num_key_value_heads * num_key_value_groups * head_dim)
+
+        return att_output
+
+    def sdpa_attention_forward(
+        self, attention_mask, batch_size, head_dim, query_states, key_states, value_states
+    ):
+        """Implement attention computation using scaled_dot_product_attention
+
+        Args:
+            attention_mask: Attention mask tensor
+            batch_size: Batch size
+            head_dim: Dimension of each attention head
+            query_states: Query states [batch, seq_len, num_heads, head_dim]
+            key_states: Key states [batch, seq_len, num_kv_heads, head_dim]
+            value_states: Value states [batch, seq_len, num_kv_heads, head_dim]
+
+        Returns:
+            Attention output [batch, seq_len, num_heads * head_dim]
+        """
+        # Get configuration parameters
+        num_att_heads = self.config.paligemma_config.text_config.num_attention_heads
+        num_key_value_heads = self.config.paligemma_config.text_config.num_key_value_heads
+        num_key_value_groups = num_att_heads // num_key_value_heads
+        sequence_length = key_states.shape[1]
+
+        # 1. GQA expansion
+        # Expand key_states and value_states to match the number of query heads
+        key_states = (
+            key_states[:, :, :, None, :]
+            .expand(batch_size, sequence_length, num_key_value_heads, num_key_value_groups, head_dim)
+            .reshape(batch_size, sequence_length, -1, head_dim)
+        )
+
+        value_states = (
+            value_states[:, :, :, None, :]
+            .expand(batch_size, sequence_length, num_key_value_heads, num_key_value_groups, head_dim)
+            .reshape(batch_size, sequence_length, -1, head_dim)
+        )
+
+        # 2. Adjust dimension order for SDPA
+        # Convert from [batch, seq_len, heads, dim] to [batch, heads, seq_len, dim]
+        query_states = query_states.transpose(1, 2)  # [batch, heads, seq_len, dim]
+        key_states = key_states.transpose(1, 2)  # [batch, heads, seq_len, dim]
+        value_states = value_states.transpose(1, 2)  # [batch, heads, seq_len, dim]
+
+        # 3. Convert attention_mask shape
+        # Convert from [batch, seq_len, seq_len] to [batch, 1, seq_len, seq_len]
+        attention_mask = attention_mask.unsqueeze(1)  # Add heads dimension
+
+        # 4. Compute attention using PyTorch's SDPA
+        # Uses whatever precision is set by the outside context
+        att_output = torch.nn.functional.scaled_dot_product_attention(
+            query_states,  # [batch, heads, seq_len, dim]
+            key_states,  # [batch, heads, seq_len, dim]
+            value_states,  # [batch, heads, seq_len, dim]
+            attn_mask=attention_mask,  # [batch, 1, seq_len, seq_len]
+            dropout_p=0.0,
+            scale=head_dim**-0.5,  # Explicitly specify scaling factor
+            is_causal=False,  # Causality is implemented through mask
+        )
+
+        # 5. Restore dimension order
+        att_output = att_output.transpose(1, 2)  # [batch, seq_len, heads, dim]
+
+        # 6. Reshape output to expected format
         att_output = att_output.reshape(batch_size, -1, num_key_value_heads * num_key_value_groups * head_dim)
 
         return att_output

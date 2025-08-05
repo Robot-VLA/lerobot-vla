@@ -54,6 +54,7 @@ from collections import deque
 
 import torch
 import torch.nn.functional as F  # noqa: N812
+import transformers
 from torch import Tensor, nn
 from transformers import AutoTokenizer
 
@@ -66,6 +67,11 @@ from lerobot.policies.pi0.paligemma_with_expert import (
 )
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.utils.utils import get_safe_dtype
+
+# Assert that transformer version is 4.50.3 (we use inner functions in PaliGemma and it only works with this version).
+assert transformers.__version__ == "4.50.3", (
+    f"Expected transformers version 4.50.3 but got {transformers.__version__}"
+)
 
 
 def create_sinusoidal_pos_embedding(
@@ -90,9 +96,8 @@ def create_sinusoidal_pos_embedding(
 
 
 def sample_beta(alpha, beta, bsize, device):
-    gamma1 = torch.empty((bsize,), device=device).uniform_(0, 1).pow(1 / alpha)
-    gamma2 = torch.empty((bsize,), device=device).uniform_(0, 1).pow(1 / beta)
-    return gamma1 / (gamma1 + gamma2)
+    m = torch.distributions.beta.Beta(torch.tensor([alpha]), torch.tensor([beta]))
+    return m.sample((bsize,)).to(device).reshape((bsize,))
 
 
 def make_att_2d_masks(pad_masks, att_masks):
@@ -526,10 +531,6 @@ class PI0FlowMatching(nn.Module):
         ) in zip(images, img_masks, strict=False):
             img_emb = self.paligemma_with_expert.embed_image(img)
             img_emb = img_emb.to(dtype=torch.bfloat16)
-
-            # Normalize image embeddings
-            img_emb_dim = img_emb.shape[-1]
-            img_emb = img_emb * torch.tensor(img_emb_dim**0.5, dtype=img_emb.dtype, device=img_emb.device)
 
             bsize, num_img_embs = img_emb.shape[:2]
             img_mask = img_mask[:, None].expand(bsize, num_img_embs)

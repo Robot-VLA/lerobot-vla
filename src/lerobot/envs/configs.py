@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import abc
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import draccus
 
@@ -30,6 +32,7 @@ class EnvConfig(draccus.ChoiceRegistry, abc.ABC):
     fps: int = 30
     features: dict[str, PolicyFeature] = field(default_factory=dict)
     features_map: dict[str, str] = field(default_factory=dict)
+    env_device: str = "cpu"
 
     @property
     def type(self) -> str:
@@ -39,6 +42,92 @@ class EnvConfig(draccus.ChoiceRegistry, abc.ABC):
     @abc.abstractmethod
     def gym_kwargs(self) -> dict:
         raise NotImplementedError()
+
+
+@EnvConfig.register_subclass("isaaclab")
+@dataclass
+class IsaacLabEnvConfig(EnvConfig):
+    task: str = "DROID"
+    fps: int = 15
+    # https://github.com/arhanjain/sim-evals/blob/efd8e0aac2360bd05f0bfaf0f717e7c5ec4f1b2b/run_eval.py#L62
+    task_description: str = "put the cube in the bowl"  # "put the cube in the bowl", "put the can in the mug", "put banana in the bin",
+    enable_cameras: bool = True
+    headless: bool = True
+    use_fabric: bool = True
+    env_device: str = "cuda"
+    features: dict[str, PolicyFeature] = field(
+        default_factory=lambda: {
+            "action": PolicyFeature(type=FeatureType.ACTION, shape=(8,)),
+            "observation.images.external_cam": PolicyFeature(type=FeatureType.VISUAL, shape=(720, 1280, 3)),
+            "observation.images.wrist_cam": PolicyFeature(type=FeatureType.VISUAL, shape=(720, 1280, 3)),
+            "observation.state": PolicyFeature(type=FeatureType.STATE, shape=(8,)),
+        }
+    )
+    features_map: dict[str, str] = field(
+        default_factory=lambda: {
+            "action": ACTION,
+            "observation.images.external_cam": f"{OBS_IMAGES}.external_cam",
+            "observation.images.wrist_cam": f"{OBS_IMAGES}.wrist_cam",
+            "observation.state": OBS_STATE,
+        }
+    )
+
+    def __post_init__(self):
+        valid_descriptions = ["put the cube in the bowl", "put the can in the mug", "put banana in the bin"]
+        if self.task_description not in valid_descriptions:
+            raise ValueError(
+                f"Invalid task_description: '{self.task_description}'. Must be one of: {valid_descriptions}"
+            )
+
+    @property
+    def gym_kwargs(self) -> dict:
+        return {}
+
+
+@EnvConfig.register_subclass("maniskill")
+@dataclass
+class ManiSkillEnvConfig(EnvConfig):
+    task: str = "StackCube-v1"
+    task_description: str = "Stack the red cube on top of the green cube."
+    control_mode: Literal[
+        "pd_joint_delta_pos",
+        "pd_joint_pos",
+        "pd_ee_delta_pos",
+        "pd_ee_delta_pose",
+        "pd_ee_pose",
+        "pd_joint_target_delta_pos",
+        "pd_ee_target_delta_pos",
+        "pd_ee_target_delta_pose",
+        "pd_joint_vel",
+        "pd_joint_pos_vel",
+        "pd_joint_delta_pos_vel",
+    ] = "pd_joint_pos"
+    fps: int = 20
+    max_episode_steps: int = 150
+    features: dict[str, PolicyFeature] = field(
+        default_factory=lambda: {
+            "action": PolicyFeature(type=FeatureType.ACTION, shape=(8,)),
+            "observation.images.base_camera": PolicyFeature(type=FeatureType.VISUAL, shape=(128, 128, 3)),
+            "observation.images.hand_camera": PolicyFeature(type=FeatureType.VISUAL, shape=(128, 128, 3)),
+            "observation.state": PolicyFeature(type=FeatureType.STATE, shape=(18,)),
+        }
+    )
+    features_map: dict[str, str] = field(
+        default_factory=lambda: {
+            "action": ACTION,
+            "observation.images.base_camera": f"{OBS_IMAGES}.base_camera",
+            "observation.images.hand_camera": f"{OBS_IMAGES}.hand_camera",
+            "observation.state": OBS_STATE,
+        }
+    )
+
+    @property
+    def gym_kwargs(self) -> dict:
+        return {
+            "obs_mode": "sensor_data",
+            "control_mode": self.control_mode,
+            "render_mode": "rgb_array",
+        }
 
 
 @EnvConfig.register_subclass("aloha")
