@@ -1,138 +1,107 @@
 """
-This script uses the ManiSkill trajectory dataset to replay trajectories in the LeRobot dataset format.
-In order to retrieve the camera observations, we use obs_mode: str = "sensor_data" to create the env.
+https://github.com/haosulab/ManiSkill/blob/main/scripts/data_generation/replay_for_il_baselines.sh
 
-To use this file, make sure DATASET_FEATURES match the observation and action spaces of the environment you are trying to replay.
+Control Mode: pd_ee_delta_pose
+Observation State: qpos
 
-The following environments support wrist cam:
-- PlugCharger
-- PegInseration
+Demostration types:
+- MP: Motion Planning
+- RL: RL policy
 
++-----------------------------+------------+--------------+---------------------+--------------+
+| Task                       | Demo Type  | Cameras      | Observation Space   | Action Space |
++-----------------------------+------------+--------------+---------------------+--------------+
+| PokeCube-v1               | RL         | base         | 9                   | 7            |
+| LiftPegUpright-v1         | RL         | base         | 9                   | 7            |
+| PushCube-v1               | RL         | base         | 9                   | 7            |
+| PickCube-v1               | RL         | base         | 9                   | 7            |
+| StackCube-v1              | RL         | base + hand  | 9                   | 7            |
+| PegInsertionSide-v1       | MP         | base + hand  | 9                   | 7            |
+| DrawTriangle-v1           | MP         | base         | 7                   | 6            |
+| PushT-v1                  | RL         | base         | 7                   | 6            |
++-----------------------------+------------+--------------+---------------------+--------------+
 
-Example usage:
-uv run python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
---repo_id brandonyang/LiftPegUprightRL-v1 \
---task_description "Pick up a orange-white peg and insert the orange end into the box with a hole in it." \
---traj_path <TRAJECTORY_PATH>/PegInsertionSide-v1/rl/trajectory.h5 \
---upload_to_hub 
+COMPLETE: /PFS/output/yangyifan/cache/maniskill_datasets/PokeCube-v1/rl/trajectory.rgb.pd_ee_delta_pose.physx_cuda.h5
+uv run python src/lerobot/scripts/convert_maniskill_datasets/replay_trajectory.py \
+    --traj-path /PFS/output/yangyifan/cache/maniskill_datasets/PokeCube-v1/rl/trajectory.none.pd_ee_delta_pose.physx_cuda.h5 \
+    --use-first-env-state -c pd_ee_delta_pose -o rgb \
+    --save-traj --num-envs 256 -b physx_cuda
 
+COMPLETE: /PFS/output/yangyifan/cache/maniskill_datasets/LiftPegUpright-v1/rl/trajectory.rgb.pd_ee_delta_pose.physx_cuda.h5
+uv run python src/lerobot/scripts/convert_maniskill_datasets/replay_trajectory.py \
+    --traj-path /PFS/output/yangyifan/cache/maniskill_datasets/LiftPegUpright-v1/rl/trajectory.none.pd_ee_delta_pose.physx_cuda.h5 \
+    --use-first-env-state -c pd_ee_delta_pose -o rgb \
+    --save-traj --num-envs 256 -b physx_cuda
 
-python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
---repo_id brandonyang/StackCube-v1 \
---task_description "Stack the red cube on top of the green cube." \
---traj_path <TRAJECTORY_PATH>/StackCube-v1/motionplanning/trajectory.h5 \
---upload_to_hub \
---count 200
+COMPLETE: /PFS/output/yangyifan/cache/maniskill_datasets/PushCube-v1/rl/trajectory.rgb.pd_ee_delta_pose.physx_cuda.h5
+uv run python src/lerobot/scripts/convert_maniskill_datasets/replay_trajectory.py \
+    --traj-path /PFS/output/yangyifan/cache/maniskill_datasets/PushCube-v1/rl/trajectory.none.pd_ee_delta_pose.physx_cuda.h5 \
+    --use-first-env-state -c pd_ee_delta_pose -o rgb \
+    --save-traj --num-envs 256 -b physx_cuda
+    
+COMPLETE: /PFS/output/yangyifan/cache/maniskill_datasets/PickCube-v1/rl/trajectory.rgb.pd_ee_delta_pose.physx_cuda.h5
+uv run python src/lerobot/scripts/convert_maniskill_datasets/replay_trajectory.py \
+    --traj-path /PFS/output/yangyifan/cache/maniskill_datasets/PickCube-v1/rl/trajectory.none.pd_ee_delta_pose.physx_cuda.h5 \
+    --use-first-env-state -c pd_ee_delta_pose -o rgb \
+    --save-traj --num-envs 256 -b physx_cuda
 
-python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
---repo_id brandonyang/PegInsertionSide-v1 \
---task_description "Pick up a orange-white peg and insert the orange end into the box with a hole in it." \
---traj_path <TRAJECTORY_PATH>/PegInsertionSide-v1/motionplanning/trajectory.h5 \
---upload_to_hub \
---count 200
+COMPLETE /PFS/output/yangyifan/cache/maniskill_datasets/StackCube-v1/rl/trajectory.rgb.pd_ee_delta_pose.physx_cuda.h5
+uv run python src/lerobot/scripts/convert_maniskill_datasets/replay_trajectory.py \
+    --traj-path /PFS/output/yangyifan/cache/maniskill_datasets/StackCube-v1/rl/trajectory.none.pd_ee_delta_pose.physx_cuda.h5 \
+    --use-first-env-state -c pd_ee_delta_pose -o rgb \
+    --save-traj --num-envs 256 -b physx_cuda
 
-python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
---repo_id brandonyang/PlugCharger-v1 \
---task_description "Pick up one of the misplaced shapes on the board/kit and insert it into the correct empty slot." \
---traj_path <TRAJECTORY_PATH>/PlugCharger-v1/motionplanning/trajectory.h5 \
---upload_to_hub 
+COMPLETE: /PFS/output/yangyifan/cache/maniskill_datasets/PegInsertionSide-v1/motionplanning/trajectory.rgb.pd_ee_delta_pose.physx_cpu.h5
+uv run python src/lerobot/scripts/convert_maniskill_datasets/replay_trajectory.py \
+  --traj-path /PFS/output/yangyifan/cache/maniskill_datasets/PegInsertionSide-v1/motionplanning/trajectory.h5 \
+  --use-first-env-state -c pd_ee_delta_pose -o rgb \
+  --save-traj --num-envs 10 -b physx_cpu
 
+COMPLETE: /PFS/output/yangyifan/cache/maniskill_datasets/DrawTriangle-v1/motionplanning/trajectory.rgb.pd_ee_delta_pose.physx_cpu.h5
+uv run python src/lerobot/scripts/convert_maniskill_datasets/replay_trajectory.py \
+  --traj-path /PFS/output/yangyifan/cache/maniskill_datasets/DrawTriangle-v1/motionplanning/trajectory.h5 \
+  --use-first-env-state -c pd_ee_delta_pose -o rgb \
+  --save-traj --num-envs 10 -b physx_cpu
 
-python src/lerobot/scripts/convert_maniskill_to_lerobot.py \
---repo_id dummy/dummies-v1 \
---task_description "Pick up one of the misplaced shapes on the board/kit and insert it into the correct empty slot." \
---traj_path <TRAJECTORY_PATH>/LiftPegUpright-v1/rl/trajectory.none.pd_ee_delta_pose.physx_cuda.h5 \
---upload_to_hub 
+# TODO(branyang02): Update ManiSkill or manually add StackPyramid-v1 env.
 
-Note: Replace <TRAJECTORY_PATH> with the actual path to your trajectory dataset.
+### COMPLETE: /PFS/output/yangyifan/cache/maniskill_datasets/PushT-v1/rl/trajectory.rgb.pd_ee_delta_pose.physx_cuda.h5
+uv run python src/lerobot/scripts/convert_maniskill_datasets/replay_trajectory.py \
+    --traj-path /PFS/output/yangyifan/cache/maniskill_datasets/PushT-v1/rl/trajectory.none.pd_ee_delta_pose.physx_cuda.h5 \
+    --use-first-env-state -c pd_ee_delta_pose -o rgb \
+    --save-traj --num-envs 256 -b physx_cuda
 """
 
+import copy
+import multiprocessing as mp
 import os
 from dataclasses import dataclass
 from typing import Annotated, Optional
 
 import gymnasium as gym
 import h5py
+import mani_skill.envs  # noqa: F401
 import numpy as np
 import torch
 import tyro
 from mani_skill.envs.utils.system.backend import CPU_SIM_BACKENDS
 from mani_skill.trajectory import utils as trajectory_utils
+from mani_skill.trajectory.merge_trajectory import merge_trajectories
+from mani_skill.trajectory.utils.actions import conversion as action_conversion
 from mani_skill.utils import common, io_utils, wrappers
 from mani_skill.utils.logging_utils import logger
 from mani_skill.utils.wrappers.flatten import FlattenActionSpaceWrapper
 from mani_skill.utils.wrappers.record import RecordEpisode
 from tqdm import tqdm
 
-from lerobot.datasets.lerobot_dataset import LeRobotDataset
-
-DATASET_FEATURES = {
-    "observation.images.base_camera": {
-        "dtype": "video",
-        "shape": (128, 128, 3),
-        "names": ["height", "width", "channels"],
-        "info": None,
-    },
-    "observation.images.hand_camera": {
-        "dtype": "video",
-        "shape": (128, 128, 3),
-        "names": ["height", "width", "channels"],
-        "info": None,
-    },
-    "observation.state": {
-        "dtype": "float32",
-        "shape": (18,),
-        "names": [
-            "s_0",
-            "s_1",
-            "s_2",
-            "s_3",
-            "s_4",
-            "s_5",
-            "s_6",
-            "s_7",
-            "s_8",
-            "s_9",
-            "s_10",
-            "s_11",
-            "s_12",
-            "s_13",
-            "s_14",
-            "s_15",
-            "s_16",
-            "s_17",
-        ],
-    },
-    "action": {
-        "dtype": "float32",
-        "shape": (8,),
-        "names": [
-            "a_0",
-            "a_1",
-            "a_2",
-            "a_3",
-            "a_4",
-            "a_5",
-            "a_6",
-            "a_7",
-        ],
-    },
-}
-
 
 @dataclass
 class Args:
-    repo_id: str
-    """The repo id to upload the replayed trajectory to."""
-    task_description: str
-    """The task description to use for the replayed trajectory. This will be used as the task name in the lerobot dataset."""
     traj_path: str
     """Path to the trajectory .h5 file to replay"""
-    upload_to_hub: bool = False
-    """Whether to upload the replayed trajectory to the lerobot dataset hub"""
     sim_backend: Annotated[Optional[str], tyro.conf.arg(aliases=["-b"])] = None
     """Which simulation backend to use. Can be 'physx_cpu', 'physx_gpu'. If not specified the backend used is the same as the one used to collect the trajectory data."""
-    obs_mode: str = "sensor_data"
+    obs_mode: Annotated[Optional[str], tyro.conf.arg(aliases=["-o"])] = None
     """Target observation mode to record in the trajectory. See
     https://maniskill.readthedocs.io/en/latest/user_guide/concepts/observation.html for a full list of supported observation modes."""
     target_control_mode: Annotated[Optional[str], tyro.conf.arg(aliases=["-c"])] = None
@@ -142,7 +111,7 @@ class Args:
     """
     verbose: bool = False
     """Whether to print verbose information during trajectory replays"""
-    save_traj: bool = True
+    save_traj: bool = False
     """Whether to save trajectories to disk. This will not override the original trajectory file."""
     save_video: bool = False
     """Whether to save videos"""
@@ -179,17 +148,6 @@ class Args:
     num_envs: Annotated[int, tyro.conf.arg(aliases=["-n"])] = 1
     """Number of environments to run to replay trajectories. With CPU backends typically this is parallelized via python multiprocessing.
     For parallelized simulation backends like physx_gpu, this is parallelized within a single python process by leveraging the GPU."""
-
-
-def print_nested_keys(d, prefix=""):
-    if isinstance(d, dict):
-        for k, v in d.items():
-            new_prefix = f"{prefix}.{k}" if prefix else k
-            print_nested_keys(v, new_prefix)
-    elif isinstance(d, torch.Tensor):
-        print(f"{prefix}: Tensor, shape={tuple(d.shape)}, dtype={d.dtype}, device={d.device}")
-    else:
-        print(f"{prefix}: {type(d).__name__}")
 
 
 @dataclass
@@ -233,7 +191,7 @@ def replay_parallelized_sim(args: Args, env: RecordEpisode, pbar, episodes, traj
         trajectory_ids = [episode["episode_id"] for episode in episode_batch]
         episode_lens = np.array([episode["elapsed_steps"] for episode in episode_batch])
         ori_control_mode = episode_batch[0]["control_mode"]
-        assert all(episode["control_mode"] == ori_control_mode for episode in episode_batch), (
+        assert all([episode["control_mode"] == ori_control_mode for episode in episode_batch]), (  # noqa: C419
             "Replay trajectory with parallelized environments is only supported for trajectories with the same control mode"
         )
         episode_batch_max_len = max(episode_lens)
@@ -254,7 +212,7 @@ def replay_parallelized_sim(args: Args, env: RecordEpisode, pbar, episodes, traj
             sanity_check_and_format_seed(episode)
             if not warned_reset_kwargs_options and "options" in episode["reset_kwargs"]:
                 logger.warning(
-                    "Reset kwargs includes options, which are not supported in GPU sim replay and will be ignored."
+                    f"Reset kwargs includes options, which are not supported in GPU sim replay and will be ignored."  # noqa: F541
                 )
                 warned_reset_kwargs_options = True
 
@@ -293,7 +251,7 @@ def replay_parallelized_sim(args: Args, env: RecordEpisode, pbar, episodes, traj
                     if isinstance(x, np.ndarray):
                         x[-1, :] = y[-1, :]
                     else:
-                        for k in x:
+                        for k in x.keys():  # noqa: SIM118
                             recursive_replace(x[k], y[k])
 
                 recursive_replace(env._trajectory_buffer.state, common.batch(env_states_batch[0]))
@@ -324,10 +282,11 @@ def replay_parallelized_sim(args: Args, env: RecordEpisode, pbar, episodes, traj
                     flushed_trajectories |= envs_to_flush
                     if envs_to_flush.sum() > 0:
                         pbar.update(n=envs_to_flush.sum())
-                        if not args.allow_failure and "success" in info:
-                            envs_to_flush &= (info["success"]).cpu().numpy()
+                        if not args.allow_failure:  # noqa: SIM102
+                            if "success" in info:
+                                envs_to_flush &= (info["success"] == True).cpu().numpy()  # noqa: E712
                         if args.discard_timeout:
-                            envs_to_flush &= (not truncated).cpu().numpy()
+                            envs_to_flush &= (truncated == False).cpu().numpy()  # noqa: E712
                         successful_replays += envs_to_flush.sum()
                         env.flush_trajectory(env_idxs_to_flush=np.where(envs_to_flush)[0])
         else:
@@ -338,11 +297,6 @@ def replay_parallelized_sim(args: Args, env: RecordEpisode, pbar, episodes, traj
 
 
 def replay_cpu_sim(args: Args, env: RecordEpisode, ori_env, pbar, episodes, trajectories):
-    lerobot_dataset = LeRobotDataset.create(
-        repo_id=args.repo_id,
-        fps=args.video_fps if args.video_fps is not None else env.unwrapped.control_freq,
-        features=DATASET_FEATURES,
-    )
     successful_replays = 0
     for episode in episodes:
         sanity_check_and_format_seed(episode)
@@ -377,7 +331,7 @@ def replay_cpu_sim(args: Args, env: RecordEpisode, ori_env, pbar, episodes, traj
                         if isinstance(x, np.ndarray):
                             x[-1, :] = y[-1, :]
                         else:
-                            for k in x:
+                            for k in x.keys():  # noqa: SIM118
                                 recursive_replace(x[k], y[k])
 
                     recursive_replace(env._trajectory_buffer.state, common.batch(ori_env_states[0]))
@@ -407,31 +361,38 @@ def replay_cpu_sim(args: Args, env: RecordEpisode, ori_env, pbar, episodes, traj
                 for t, a in enumerate(ori_actions):
                     if pbar is not None:
                         pbar.update()
-                    obs, rew, terminated, truncated, info = env.step(a)
+                    _, _, _, truncated, info = env.step(a)
                     if args.use_env_states:
                         env.base_env.set_state_dict(ori_env_states[t])
+                    if args.vis:
+                        env.base_env.render_human()
 
-                    lerobot_dataset.add_frame(
-                        frame={
-                            "observation.images.base_camera": obs["sensor_data"]["base_camera"]["Color"][
-                                0, :, :, :3
-                            ].cpu(),
-                            "observation.images.hand_camera": obs["sensor_data"]["hand_camera"]["Color"][
-                                0, :, :, :3
-                            ].cpu(),
-                            "observation.state": torch.concat(
-                                [
-                                    obs["agent"]["qpos"][0],  # qpos
-                                    obs["agent"]["qvel"][0],  # qvel
-                                ],
-                            ).cpu(),
-                            "action": a,
-                        },
-                        task=args.task_description,
-                    )
+            # From joint position to others
+            elif ori_control_mode == "pd_joint_pos":
+                info = action_conversion.from_pd_joint_pos(
+                    args.target_control_mode,
+                    ori_actions,
+                    ori_env,
+                    env,
+                    render=args.vis,
+                    pbar=pbar,
+                    verbose=args.verbose,
+                )
+
+            # From joint delta position to others
+            elif ori_control_mode == "pd_joint_delta_pos":
+                info = action_conversion.from_pd_joint_delta_pos(
+                    args.target_control_mode,
+                    ori_actions,
+                    ori_env,
+                    env,
+                    render=args.vis,
+                    pbar=pbar,
+                    verbose=args.verbose,
+                )
             else:
                 raise NotImplementedError(
-                    "Replay with different control modes is not supported when replaying on CPU parallelized environments"
+                    f"Script currently does not support converting {ori_control_mode} to {args.target_control_mode}"
                 )
 
             success = info.get("success", False)
@@ -441,8 +402,7 @@ def replay_cpu_sim(args: Args, env: RecordEpisode, ori_env, pbar, episodes, traj
             if success or args.allow_failure:
                 successful_replays += 1
                 if args.save_traj:
-                    lerobot_dataset.save_episode()
-                    env.flush_trajectory(save=False)
+                    env.flush_trajectory()
                 if args.save_video:
                     env.flush_video(ignore_empty_transition=False)
                 break
@@ -453,10 +413,11 @@ def replay_cpu_sim(args: Args, env: RecordEpisode, ori_env, pbar, episodes, traj
             env.flush_video(save=False)
             tqdm.write(f"Episode {episode_id} is not replayed successfully. Skipping")
 
-    if args.upload_to_hub:
-        lerobot_dataset.push_to_hub()
-
     return ReplayResult(num_replays=len(episodes), successful_replays=successful_replays)
+
+
+def _main_helper(x):
+    return _main(*x)
 
 
 def _main(
@@ -512,7 +473,10 @@ def _main(
     if use_cpu_backend:
         if num_procs > 1:
             new_traj_name = new_traj_name + "." + str(proc_id)
-        ori_env = gym.make(env_id, **ori_env_kwargs) if args.target_control_mode is not None else None
+        if args.target_control_mode is not None:  # noqa: SIM108
+            ori_env = gym.make(env_id, **ori_env_kwargs)
+        else:
+            ori_env = None
     else:
         pass
 
@@ -538,9 +502,6 @@ def _main(
             args, env, ori_env, pbar, [episodes[index] for index in inds], ori_h5_file
         )
     else:
-        raise NotImplementedError(
-            "Converting trajectories with GPU parallelized environments is not supported yet. Please use CPU parallelized environments instead."
-        )
         replay_result = replay_parallelized_sim(args, env, pbar, episodes, ori_h5_file)
 
     env.close()
@@ -600,12 +561,12 @@ def main(args: Args):
         args.render_mode
     )  # note this only affects the videos saved as RecordEpisode wrapper calls env.render
 
-    record_episode_kwargs = {
-        "save_on_reset": False,
-        "save_trajectory": args.save_traj,
-        "save_video": args.save_video,
-        "record_reward": args.record_rewards,
-    }
+    record_episode_kwargs = dict(  # noqa: C408
+        save_on_reset=False,
+        save_trajectory=args.save_traj,
+        save_video=args.save_video,
+        record_reward=args.record_rewards,
+    )
 
     if args.count is not None and args.count > len(json_data["episodes"]):
         logger.warning(
@@ -639,17 +600,51 @@ def main(args: Args):
     else:
         env_kwargs["num_envs"] = 1
         ori_env_kwargs["num_envs"] = 1
-
-        _, replay_result = _main(
-            args,
-            use_cpu_backend=True,
-            env_id=env_id,
-            env_kwargs=env_kwargs,
-            ori_env_kwargs=ori_env_kwargs,
-            record_episode_kwargs=record_episode_kwargs,
-            proc_id=0,
-            num_procs=1,
-        )
+        if args.num_envs > 1:
+            pool = mp.Pool(args.num_envs)
+            proc_args = [
+                (
+                    copy.deepcopy(args),
+                    True,
+                    env_id,
+                    env_kwargs,
+                    ori_env_kwargs,
+                    record_episode_kwargs,
+                    i,
+                    args.num_envs,
+                )
+                for i in range(args.num_envs)
+            ]
+            # res = pool.starmap(_main, proc_args)
+            res = list(tqdm(pool.imap(_main_helper, proc_args), total=args.count))
+            replay_results_list = [x[1] for x in res]
+            trajectory_paths = [x[0] for x in res]
+            pool.close()
+            if args.save_traj:
+                # A hack to find the path
+                output_path = trajectory_paths[0][: -len("0.h5")] + "h5"
+                merge_trajectories(output_path, trajectory_paths)
+                for h5_path in trajectory_paths:
+                    tqdm.write(f"Remove {h5_path}")
+                    os.remove(h5_path)
+                    json_path = h5_path.replace(".h5", ".json")
+                    tqdm.write(f"Remove {json_path}")
+                    os.remove(json_path)
+            replay_result = ReplayResult(
+                num_replays=sum([x.num_replays for x in replay_results_list]),
+                successful_replays=sum([x.successful_replays for x in replay_results_list]),
+            )
+        else:
+            _, replay_result = _main(
+                args,
+                use_cpu_backend=True,
+                env_id=env_id,
+                env_kwargs=env_kwargs,
+                ori_env_kwargs=ori_env_kwargs,
+                record_episode_kwargs=record_episode_kwargs,
+                proc_id=0,
+                num_procs=1,
+            )
 
     pbar.close()
     print(
@@ -659,4 +654,6 @@ def main(args: Args):
 
 
 if __name__ == "__main__":
+    # spawn is needed due to warp init issue
+    mp.set_start_method("spawn")
     main(parse_args())
