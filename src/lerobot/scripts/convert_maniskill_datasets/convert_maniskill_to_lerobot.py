@@ -41,7 +41,8 @@ uv run python src/lerobot/scripts/convert_maniskill_datasets/convert_maniskill_t
     --repo_id brandonyang/PegInsertionSide-v1 \
     --task_description "Pick up a orange-white peg and insert the orange end into the box with a hole in it."
 
-IN PROGRESS 1L
+COMPLETE AND UPLOADED
+https://huggingface.co/datasets/brandonyang/DrawTriangle-v1
 uv run python src/lerobot/scripts/convert_maniskill_datasets/convert_maniskill_to_lerobot.py \
     --file_path /PFS/output/yangyifan/cache/maniskill_datasets/DrawTriangle-v1/motionplanning/trajectory.rgb.pd_ee_delta_pose.physx_cpu.h5 \
     --repo_id brandonyang/DrawTriangle-v1 \
