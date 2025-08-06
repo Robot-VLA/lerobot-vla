@@ -113,7 +113,8 @@ class IsaacLabEnv(LeRobotBaseEnv):
 
     def close(self) -> None:
         self.isaaclab_env.close()
-        self.simulation_app.close()
+        # HACK(branyang02): Closing the simulation app leads to the process exiting.
+        # self.simulation_app.close()
 
     def _reset(self, seeds: list[int] | None = None) -> tuple[dict, dict]:
         _ = self.isaaclab_env.reset(seed=seeds[0])  # reset twice to properly load assets
@@ -166,6 +167,9 @@ def repack_delta_to_absolute(actions: torch.Tensor, state: torch.Tensor, mask: t
     Returns:
         actions: Tensor of same shape with masked dims set to absolute.
     """
+    assert actions.device == state.device == mask.device, (
+        f"All inputs must be on the same device. Got: actions ({actions.device}), state ({state.device}), mask ({mask.device})"
+    )
     d_mask = mask.shape[0]
     assert state.shape[-1] >= d_mask
 
