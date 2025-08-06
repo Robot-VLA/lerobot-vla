@@ -24,7 +24,7 @@ from isaaclab.utils import configclass, noise
 from pxr import Usd, UsdPhysics
 
 DATA_PATH = Path(os.getenv("ISAAC_SIM_ASSETS", "/isaac-sim/kit/cache/custom_assets"))
-logging.info("Loading assets from:", DATA_PATH.resolve())  # noqa: F821
+logging.info(f"Loading assets from: {DATA_PATH.resolve()}")  # noqa: F821
 
 
 @configclass
