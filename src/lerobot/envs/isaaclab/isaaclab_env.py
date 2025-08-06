@@ -25,6 +25,12 @@ class IsaacLabEnv(LeRobotBaseEnv):
         # Therefore we save the observation images to self._render_images instead
 
         self._render_images = None
+        self._curr_state = None  # Used to store the current state for absolute action space conversion
+        self._action_mask = torch.tensor(
+            [True, True, True, True, True, True, True, False]
+        ).to(
+            self.config.env_device
+        )  # Mask for absolute action space conversion. Note that we do not convert the gripper action to absolute.
 
     @property
     def _max_steps(self) -> int:
@@ -65,6 +71,8 @@ class IsaacLabEnv(LeRobotBaseEnv):
             ).unsqueeze(0),  # Add batch dimension
             "task": [task_description] * self.num_envs,
         }
+
+        self._curr_state = processed["observation.state"]
 
         return processed
 
@@ -119,6 +127,7 @@ class IsaacLabEnv(LeRobotBaseEnv):
         self.simulation_app.close()
 
     def _reset(self, seeds: list[int] | None = None) -> tuple[dict, dict]:
+        _ = self.isaaclab_env.reset(seed=seeds[0])  # reset twice to properly load assets
         reset_results = self.isaaclab_env.reset(seed=seeds[0])  # isaaclab only supports single seed reset
         observation, info = (self._move_to_device(res, self.config.env_device) for res in reset_results)
         observation = self._preprocess_observation(observation, task_description=self.config.task_description)
@@ -130,6 +139,11 @@ class IsaacLabEnv(LeRobotBaseEnv):
     def _step(
         self, action: torch.Tensor, done: torch.Tensor
     ) -> tuple[dict, torch.Tensor, torch.Tensor, torch.Tensor]:
+        # Binarize the gripper + convert to absolute action space
+        binarized_grip = (action[..., -1:] > 0.5).float()
+        action = torch.cat([action[..., :-1], binarized_grip], dim=-1)
+        action = repack_delta_to_absolute(action, self._curr_state, self._action_mask)
+
         step_results = self.isaaclab_env.step(action)
         observation, reward, terminated, truncated, info = (
             self._move_to_device(res, self.config.env_device) for res in step_results
@@ -149,3 +163,24 @@ class IsaacLabEnv(LeRobotBaseEnv):
         done = terminated | truncated | done
 
         return observation, reward, done, successes
+
+
+def repack_delta_to_absolute(actions: torch.Tensor, state: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    """
+    Conversion of delta actions to absolute using a binary mask.
+
+    Args:
+        actions: Tensor of shape (..., D)
+        state: Tensor of shape (..., D_state)
+        mask: Bool tensor of shape (D,)
+
+    Returns:
+        actions: Tensor of same shape with masked dims set to absolute.
+    """
+    d_mask = mask.shape[0]
+    assert state.shape[-1] >= d_mask
+
+    idx = mask.nonzero(as_tuple=True)[0]
+    actions = actions.clone()
+    actions[..., idx] += state[..., idx]
+    return actions
