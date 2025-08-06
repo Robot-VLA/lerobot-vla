@@ -1,7 +1,3 @@
-"""
-TODO(branyang02): WIP, creating IsaaclabEnv subclass for LeRobotEnv
-"""
-
 import argparse
 import logging
 from typing import Any
@@ -37,10 +33,6 @@ class IsaacLabEnv(LeRobotBaseEnv):
         return self.isaaclab_env.env.max_episode_length
 
     def _preprocess_observation(self, raw_observation: dict, task_description: str) -> dict:
-        # policy.arm_joint_pos: Tensor, shape=(7,), dtype=torch.float32, device=cuda:0
-        # policy.gripper_pos: Tensor, shape=(1,), dtype=torch.float32, device=cuda:0
-        # policy.external_cam: Tensor, shape=(1, 720, 1280, 3), dtype=torch.uint8, device=cuda:0
-        # policy.wrist_cam: Tensor, shape=(1, 720, 1280, 3), dtype=torch.uint8, device=cuda:0
         def _preprocess_image(img: torch.Tensor) -> torch.Tensor:
             _, h, w, c = img.shape
             assert c < h and c < w, f"expect channel last images, but instead got {img.shape=}"
@@ -68,7 +60,7 @@ class IsaacLabEnv(LeRobotBaseEnv):
                     raw_observation["policy"]["gripper_pos"],
                 ],
                 dim=-1,
-            ).unsqueeze(0),  # Add batch dimension
+            ),
             "task": [task_description] * self.num_envs,
         }
 
@@ -78,9 +70,6 @@ class IsaacLabEnv(LeRobotBaseEnv):
 
     @classmethod
     def create_env(cls, config: IsaacLabEnvConfig, num_envs: int, use_async_envs: bool) -> "IsaacLabEnv":
-        if num_envs > 1:
-            logging.warning("IsaacLabEnv does not support multiple environments. Using num_envs=1 instead.")
-            num_envs = 1
         if use_async_envs:
             logging.warning(
                 "IsaacLabEnv does not support async environments. Using synchronous mode instead."
@@ -103,7 +92,7 @@ class IsaacLabEnv(LeRobotBaseEnv):
         env_cfg = parse_env_cfg(
             config.task,
             device=args_cli.device,
-            num_envs=1,
+            num_envs=num_envs,
             use_fabric=config.use_fabric,
         )
 
@@ -120,7 +109,7 @@ class IsaacLabEnv(LeRobotBaseEnv):
         env_cfg.set_scene(scene)
 
         env = gym.make(config.task, cfg=env_cfg, render_mode="rgb_array")
-        return cls(config, num_envs=1, isaaclab_env=env, simulation_app=simulation_app)
+        return cls(config, num_envs=num_envs, isaaclab_env=env, simulation_app=simulation_app)
 
     def close(self) -> None:
         self.isaaclab_env.close()
