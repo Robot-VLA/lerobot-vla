@@ -113,7 +113,7 @@ class IsaacLabEnv(LeRobotBaseEnv):
 
     def close(self) -> None:
         self.isaaclab_env.close()
-        # HACK(branyang02): Closing the simulation app leads to the process exixting.
+        # HACK(branyang02): Closing the simulation app leads to the process exiting.
         # self.simulation_app.close()
 
     def _reset(self, seeds: list[int] | None = None) -> tuple[dict, dict]:
