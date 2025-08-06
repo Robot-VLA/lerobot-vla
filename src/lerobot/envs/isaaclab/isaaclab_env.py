@@ -25,7 +25,7 @@ class IsaacLabEnv(LeRobotBaseEnv):
         # Therefore we save the observation images to self._render_images instead
 
         self._render_images = None
-        self._curr_state = None  # Used to store the current state for absolute action space conversion
+        self._current_state = None  # Used to store the current state for absolute action space conversion
         self._action_mask = torch.tensor(
             [True, True, True, True, True, True, True, False]
         ).to(
@@ -72,7 +72,7 @@ class IsaacLabEnv(LeRobotBaseEnv):
             "task": [task_description] * self.num_envs,
         }
 
-        self._curr_state = processed["observation.state"]
+        self._current_state = processed["observation.state"]
 
         return processed
 
@@ -142,7 +142,7 @@ class IsaacLabEnv(LeRobotBaseEnv):
         # Binarize the gripper + convert to absolute action space
         binarized_grip = (action[..., -1:] > 0.5).float()
         action = torch.cat([action[..., :-1], binarized_grip], dim=-1)
-        action = repack_delta_to_absolute(action, self._curr_state, self._action_mask)
+        action = repack_delta_to_absolute(action, self._current_state, self._action_mask)
 
         step_results = self.isaaclab_env.step(action)
         observation, reward, terminated, truncated, info = (
