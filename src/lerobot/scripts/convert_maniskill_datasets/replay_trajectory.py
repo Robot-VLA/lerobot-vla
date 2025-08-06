@@ -4,7 +4,7 @@ https://github.com/haosulab/ManiSkill/blob/main/scripts/data_generation/replay_f
 Control Mode: pd_ee_delta_pose
 Observation State: qpos
 
-Demostration types:
+Demonstration types:
 - MP: Motion Planning
 - RL: RL policy
 
