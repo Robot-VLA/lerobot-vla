@@ -36,7 +36,7 @@ def test_all_envs(env_name):
     num_envs = 5
     seeds = np.random.randint(0, 1000, size=num_envs).tolist()
     cfg = make_env_config(env_name)
-    env = make_env(cfg, n_envs=5)
+    env = make_env(cfg, n_envs=num_envs)
     try:
         mock_policy = MockPolicyForEnv(action_dim=cfg.features["action"].shape[0]).to(DEVICE)
         rollout_data = env.rollout(policy=mock_policy, seeds=seeds)
