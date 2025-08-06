@@ -58,12 +58,11 @@ from pprint import pformat
 import numpy as np
 import torch
 from termcolor import colored
-from torch import Tensor
 from tqdm import trange
 
 from lerobot.configs import parser
 from lerobot.configs.eval import EvalPipelineConfig
-from lerobot.envs.base_env import LeRobotBaseEnv, RolloutResult
+from lerobot.envs.base_env import LeRobotBaseEnv
 from lerobot.envs.factory import make_env
 from lerobot.policies.factory import make_policy
 from lerobot.policies.pretrained import PreTrainedPolicy
@@ -82,7 +81,6 @@ def eval_policy(
     n_episodes: int,
     max_episodes_rendered: int = 0,
     videos_dir: Path | None = None,
-    return_episode_data: bool = False,
     start_seed: int | None = None,
 ) -> dict:
     """
@@ -92,8 +90,6 @@ def eval_policy(
         n_episodes: The number of episodes to evaluate.
         max_episodes_rendered: Maximum number of episodes to render into videos.
         videos_dir: Where to save rendered videos.
-        return_episode_data: Whether to return episode data for online training. Incorporates the data into
-            the "episodes" key of the returned dictionary. # NOTE: This is not yet implemented.
         start_seed: The first seed to use for the first individual rollout. For all subsequent rollouts the
             seed is incremented by 1. If not provided, the environments are not manually seeded.
     Returns:
@@ -125,9 +121,6 @@ def eval_policy(
     if max_episodes_rendered > 0:
         video_paths: list[str] = []
 
-    if return_episode_data:
-        episode_data: dict | None = None
-
     # we dont want progress bar when we use slurm, since it clutters the logs
     progbar = trange(n_batches, desc="Stepping through eval batches", disable=inside_slurm())
     for batch_ix in progbar:
@@ -140,11 +133,7 @@ def eval_policy(
             seeds = range(
                 start_seed + (batch_ix * env.num_envs), start_seed + ((batch_ix + 1) * env.num_envs)
             )
-        rollout_data = env.rollout(
-            policy=policy,
-            seeds=list(seeds) if seeds else None,
-            return_observations=return_episode_data,
-        )
+        rollout_data = env.rollout(policy=policy, seeds=list(seeds) if seeds else None)
 
         n_steps = rollout_data.done.shape[1]
 
@@ -164,23 +153,6 @@ def eval_policy(
             all_seeds.extend(seeds)
         else:
             all_seeds.append(None)
-
-        if return_episode_data:
-            this_episode_data = _compile_episode_data(
-                rollout_data,
-                done_indices,
-                start_episode_index=batch_ix * env.num_envs,
-                start_data_index=(0 if episode_data is None else (episode_data["index"][-1].item() + 1)),
-                fps=env.config.fps,
-            )
-            if episode_data is None:
-                episode_data = this_episode_data
-            else:
-                # Some sanity checks to make sure we are correctly compiling the data.
-                assert episode_data["episode_index"][-1] + 1 == this_episode_data["episode_index"][0]
-                assert episode_data["index"][-1] + 1 == this_episode_data["index"][0]
-                # Concatenate the episode data.
-                episode_data = {k: torch.cat([episode_data[k], this_episode_data[k]]) for k in episode_data}
 
         if max_episodes_rendered > 0:
             # Render the frames for the current rollout.
@@ -242,66 +214,10 @@ def eval_policy(
         },
     }
 
-    if return_episode_data:
-        # TODO(branyang02): Find out why this is needed.
-        raise NotImplementedError(
-            "The `return_episode_data` argument is not yet implemented in the eval script. "
-        )
-        info["episodes"] = episode_data
-
     if max_episodes_rendered > 0:
         info["video_paths"] = video_paths
 
     return info
-
-
-def _compile_episode_data(
-    rollout_data: RolloutResult,
-    done_indices: Tensor,
-    start_episode_index: int,
-    start_data_index: int,
-    fps: float,
-) -> dict:
-    """Convenience function for `eval_policy(return_episode_data=True)`
-
-    Compiles all the rollout data into a Hugging Face dataset.
-
-    Similar logic is implemented when datasets are pushed to hub (see: `push_to_hub`).
-    """
-    ep_dicts = []
-    total_frames = 0
-    for ep_ix in range(rollout_data.action.shape[0]):
-        # + 2 to include the first done frame and the last observation frame.
-        num_frames = done_indices[ep_ix].item() + 2
-        total_frames += num_frames
-
-        # Here we do `num_frames - 1` as we don't want to include the last observation frame just yet.
-        ep_dict = {
-            "action": rollout_data.action[ep_ix, : num_frames - 1],
-            "episode_index": torch.tensor([start_episode_index + ep_ix] * (num_frames - 1)),
-            "frame_index": torch.arange(0, num_frames - 1, 1),
-            "timestamp": torch.arange(0, num_frames - 1, 1) / fps,
-            "next.done": rollout_data.done[ep_ix, : num_frames - 1],
-            "next.success": rollout_data.success[ep_ix, : num_frames - 1],
-            "next.reward": rollout_data.reward[ep_ix, : num_frames - 1].type(torch.float32),
-        }
-
-        # For the last observation frame, all other keys will just be copy padded.
-        for k in ep_dict:
-            ep_dict[k] = torch.cat([ep_dict[k], ep_dict[k][-1:]])
-
-        for key in rollout_data.observation:
-            ep_dict[key] = rollout_data.observation[key][ep_ix, :num_frames]
-
-        ep_dicts.append(ep_dict)
-
-    data_dict = {}
-    for key in ep_dicts[0]:
-        data_dict[key] = torch.cat([x[key] for x in ep_dicts])
-
-    data_dict["index"] = torch.arange(start_data_index, start_data_index + total_frames, 1)
-
-    return data_dict
 
 
 @parser.wrap()
