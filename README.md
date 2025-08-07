@@ -6,11 +6,11 @@ Since LeRobot is getting too cluttered...
 
 ## Installation
 ```
-git clone https://github.com/branyang02/lerobot-exp.git
-cd lerobot-exp
+git clone https://github.com/Robot-VLA/lerobot-vla.git
+cd lerobot-vla
 git submodule update --init --recursive
 
-uv sync --prerelease=allow 
+uv sync --prerelease=allow
 # or set export UV_PRERELEASE=allow
 ```
 
@@ -22,9 +22,10 @@ uv run python src/lerobot/scripts/train.py \
   --dataset.repo_id=brandonyang/StackCube-v1 \
   --policy.type=pi0 \
   --policy.pretrained_path=lerobot/pi0 \
+  --policy.push_to_hub=false \
   --env.type=maniskill \
   --env.task=StackCube-v1 \
-  --env.task_description="Pick up a red cube and stack it on top of a green cube and let go of the cube without it falling." 
+  --env.task_description="Pick up a red cube and stack it on top of a green cube and let go of the cube without it falling."
 ```
 
 ### Eval
@@ -51,12 +52,43 @@ uv run python src/lerobot/scripts/eval.py \
   --env.task_description="put the cube in the bowl"
 ```
 
-## Dataset and Pretrained Models
+## Pretrained Models
 
-| Environment | Dataset Links                                                                                                                   | Pretrained Models                                      |
-|-------------|----------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------|
-| ManiSkill   | [StackCube-v1](https://huggingface.co/datasets/brandonyang/StackCube-v1), [PlugCharger-v1](https://huggingface.co/datasets/brandonyang/PlugCharger-v1) | WIP                                                    |
-| IsaacLab    | WIP                                                                                                                              | pi0 (WIP), pi0-FAST (WIP), pi0-DROID (WIP), pi0-FAST-DROID (WIP) |
+| Model                                                                 | Description                                                                 |
+|------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [brandonyang/pi0](https://huggingface.co/brandonyang/pi0)             | Base diffusion `pi0` for fine-tuning, converted from [`pi0_base`](https://github.com/Physical-Intelligence/openpi).                 |
+| [brandonyang/pi0_droid](https://huggingface.co/brandonyang/pi0_droid) | `pi0` model pretrained with all Pi data + finetuned on DROID, converted from `pi0_droid`.                             |
+| [brandonyang/paligemma_diffusion_droid](https://huggingface.co/brandonyang/paligemma_diffusion_droid) | `pi0` model finetuned on DROID from base paligemma VLM, converted from `paligemma_diffusion_droid`.     |
+
+
+## Datasets
+
+### [ManiSkill Datasets](https://maniskill.readthedocs.io/en/latest/index.html)
+
+- Control Mode: `pd_ee_delta_pose`
+- Observation State: `qpos`
+- Demonstration types:
+  - MP: Motion Planning
+  - RL: RL policy
+
+| Task                                                                 | Demo Type | Cameras      | Obs. Dim | Action Dim |
+|----------------------------------------------------------------------|-----------|--------------|----------|------------|
+| [PokeCube-v1](https://huggingface.co/datasets/brandonyang/PokeCube-v1)            | RL        | base         | 9        | 7          |
+| [LiftPegUpright-v1](https://huggingface.co/datasets/brandonyang/LiftPegUpright-v1) | RL        | base         | 9        | 7          |
+| [PushCube-v1](https://huggingface.co/datasets/brandonyang/PushCube-v1)            | RL        | base         | 9        | 7          |
+| [PickCube-v1](https://huggingface.co/datasets/brandonyang/PickCube-v1)            | RL        | base         | 9        | 7          |
+| [StackCube-v1](https://huggingface.co/datasets/brandonyang/StackCube-v1)          | RL        | base + hand  | 9        | 7          |
+| [PegInsertionSide-v1](https://huggingface.co/datasets/brandonyang/PegInsertionSide-v1) | MP        | base + hand  | 9        | 7          |
+| [DrawTriangle-v1](https://huggingface.co/datasets/brandonyang/DrawTriangle-v1)    | MP        | base         | 7        | 6          |
+| [PushT-v1](https://huggingface.co/datasets/brandonyang/PushT-v1)                  | RL        | base         | 7        | 6          |
+
+Conversion scripts for ManiSkill datasets are available in `src/lerobot/scripts/convert_maniskill_datasets`.
+
+### IsaacLab Datasets
+- WIP
+
+### Real Robot
+- [DROID](https://huggingface.co/datasets/cadene/droid)
 
 ## Misc
 
@@ -127,7 +159,7 @@ apptainer shell --nv --fakeroot \
   ubuntu_gpu/
 ```
 
-4. Follow installation steps, install to `/workspace/repos/lerobot-exp`.
+4. Follow installation steps, install to `/workspace/repos/lerobot-vla`.
 
 
 ### Docker
@@ -177,5 +209,5 @@ docker run --rm -it \
   ubuntu_gpu
 ```
 
-4. Follow installation steps, install to `/workspace/repos/lerobot-exp`.
+4. Follow installation steps, install to `/workspace/repos/lerobot-vla`.
 
