@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import torch
-from pytest import Cache
 from torch import nn
 
 from lerobot.policies.pi0.flex_attention import flex_attention_forward
@@ -143,7 +142,7 @@ class PaliGemmaWithExpertModel(nn.Module):
         self,
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[Union[List[torch.FloatTensor], Cache]] = None,
+        past_key_values: Optional[List[torch.FloatTensor]] = None,
         inputs_embeds: List[torch.FloatTensor] = None,
         use_cache: Optional[bool] = None,
         fill_kv_cache: Optional[bool] = None,
