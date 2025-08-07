@@ -157,14 +157,14 @@ def test_select_action(pi0, pi0_exp):
         "task": ["Do something." for _ in range(BATCH_SIZE)],
     }
     noise = sample_noise(
-        (BATCH_SIZE, CHUNK_SIZE, 32), device=DEVICE
+        (BATCH_SIZE, CHUNK_SIZE, pi0.config.max_action_dim), device=DEVICE
     )  # noise is modified in place in the diffusion loop
     noise_copy = noise.clone()
 
     pi0_actions = pi0.select_action(batch, noise=noise)
     pi0_exp_actions = pi0_exp.select_action(batch, noise=noise_copy)
 
-    torch.testing.assert_close(pi0_actions, pi0_exp_actions, rtol=1e-2, atol=1e-2)
+    torch.testing.assert_close(pi0_actions, pi0_exp_actions, rtol=1e-5, atol=1e-5)
 
 
 def test_forward_function(pi0, pi0_exp):
@@ -176,7 +176,7 @@ def test_forward_function(pi0, pi0_exp):
         "observation.images.wrist_cam": torch.randn(BATCH_SIZE, 3, 224, 224, device=DEVICE),
         "task": ["Do something." for _ in range(BATCH_SIZE)],
     }
-    noise = sample_noise((BATCH_SIZE, CHUNK_SIZE, 32), device=DEVICE)
+    noise = sample_noise((BATCH_SIZE, CHUNK_SIZE, pi0.config.max_action_dim), device=DEVICE)
     time = sample_time(BATCH_SIZE, device=DEVICE)
 
     pi0_res = pi0.forward(batch, noise=noise, time=time)
