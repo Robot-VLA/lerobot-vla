@@ -17,7 +17,7 @@ import torch.nn.functional as F  # noqa: N812
 from packaging.version import Version
 
 if Version(torch.__version__) > Version("2.5.0"):
-    # Ffex attention is only available from torch 2.5 onwards
+    # Flex attention is only available from torch 2.5 onwards
     from torch.nn.attention.flex_attention import (
         _mask_mod_signature,
         _round_up_to_multiple,
