@@ -27,6 +27,7 @@ from lerobot.envs.utils import env_to_policy_features
 from lerobot.policies.act.configuration_act import ACTConfig
 from lerobot.policies.diffusion.configuration_diffusion import DiffusionConfig
 from lerobot.policies.pi0.configuration_pi0 import PI0Config
+from lerobot.policies.pi0_exp.configuration_pi0_exp import PI0ConfigExp
 from lerobot.policies.pi0fast.configuration_pi0fast import PI0FASTConfig
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.policies.sac.configuration_sac import SACConfig
@@ -58,6 +59,10 @@ def get_policy_class(name: str) -> PreTrainedPolicy:
         from lerobot.policies.pi0.modeling_pi0 import PI0Policy
 
         return PI0Policy
+    elif name == "pi0_exp":
+        from lerobot.policies.pi0_exp.modeling_pi0_exp import PI0PolicyExp
+
+        return PI0PolicyExp
     elif name == "pi0fast":
         from lerobot.policies.pi0fast.modeling_pi0fast import PI0FASTPolicy
 
@@ -89,6 +94,8 @@ def make_policy_config(policy_type: str, **kwargs) -> PreTrainedConfig:
         return VQBeTConfig(**kwargs)
     elif policy_type == "pi0":
         return PI0Config(**kwargs)
+    elif policy_type == "pi0_exp":
+        return PI0ConfigExp(**kwargs)
     elif policy_type == "pi0fast":
         return PI0FASTConfig(**kwargs)
     elif policy_type == "sac":

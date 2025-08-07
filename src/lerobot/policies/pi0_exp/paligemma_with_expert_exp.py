@@ -18,9 +18,9 @@ from typing import List, Optional
 import torch
 from torch import nn
 
-from lerobot.policies.pi0.flex_attention import flex_attention_forward
-from lerobot.policies.pi0.models.gemma import GemmaConfig
-from lerobot.policies.pi0.models.main import (
+from lerobot.policies.pi0_exp.flex_attention_exp import flex_attention_forward
+from lerobot.policies.pi0_exp.models_exp.gemma_exp import GemmaConfig
+from lerobot.policies.pi0_exp.models_exp.main_exp import (
     GemmaForCausalLM,
     PaliGemmaConfig,
     PaliGemmaForConditionalGeneration,
