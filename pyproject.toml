@@ -115,6 +115,7 @@ dev = [
   {include-group = "pi0"},
   {include-group = "maniskill"},
   {include-group = "isaaclab"},
+  {include-group = "visualizer"},
   "ipykernel>=7.0.0a0",
 ]
 pi0 = ["transformers==4.50.3", "pytest>=8.1.0"] # we use inner functions in PaliGemma and it only works with transformer v4.50.3.
@@ -140,6 +141,9 @@ isaaclab = [
   "mediapy>=1.2.4",
   "numpy<2",
   "wandb==0.18.0"
+]
+visualizer = [
+    "websockets>=15.0.1",
 ]
 
 [tool.uv.sources]
