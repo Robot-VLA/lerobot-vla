@@ -63,8 +63,6 @@ uv run python src/lerobot/scripts/eval.py \
 
 ## Datasets
 
-### Simulation
-
 ### [ManiSkill Datasets](https://maniskill.readthedocs.io/en/latest/index.html)
 
 - Control Mode: `pd_ee_delta_pose`
@@ -87,7 +85,7 @@ uv run python src/lerobot/scripts/eval.py \
 Conversion scripts for ManiSkill datasets are available in `src/lerobot/scripts/convert_maniskill_datasets`.
 
 ### IsaacLab Datasets
-WIP
+- WIP
 
 ### Real Robot
 - [DROID](https://huggingface.co/datasets/cadene/droid)
