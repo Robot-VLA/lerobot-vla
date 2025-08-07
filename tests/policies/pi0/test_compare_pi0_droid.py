@@ -129,7 +129,7 @@ def lerobot_pi0(monkeypatch, dummy_dataset_metadata):
 
 @pytest.fixture
 def get_policy_inputs():
-    openpi_example = droid_policy.make_droid_example()
+    openpi_example = droid_policy.make_droid_example(seed=42)
     lerobot_batch = {}
 
     def _preprocess_image(img: torch.Tensor) -> torch.Tensor:

@@ -7,8 +7,10 @@ from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi import transforms
 from lerobot.policies.pi0.conversion_scripts.openpi.src.openpi.models import model as _model
 
 
-def make_droid_example() -> dict:
-    """Creates a random input example for the Droid policy."""
+def make_droid_example(seed: int = None) -> dict:
+    if seed is not None:
+        np.random.seed(seed)
+
     return {
         "observation/exterior_image_1_left": np.random.randint(256, size=(224, 224, 3), dtype=np.uint8),
         "observation/wrist_image_left": np.random.randint(256, size=(224, 224, 3), dtype=np.uint8),
