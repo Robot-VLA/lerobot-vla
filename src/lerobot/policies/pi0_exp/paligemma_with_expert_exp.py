@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from dataclasses import dataclass
 from typing import List, Optional
 
 import torch
@@ -52,6 +53,7 @@ def apply_rope(x, positions, max_wavelength=10_000):
     return res.to(dtype)
 
 
+@dataclass
 class PaliGemmaWithExpertConfig:
     def __init__(
         self,
