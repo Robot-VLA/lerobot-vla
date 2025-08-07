@@ -15,19 +15,16 @@
 from typing import List, Optional, Union
 
 import torch
-import torch.version
 from pytest import Cache
 from torch import nn
-from transformers import (
-    AutoConfig,
-    GemmaForCausalLM,
-    PaliGemmaForConditionalGeneration,
-    PretrainedConfig,
-    PreTrainedModel,
-)
-from transformers.models.auto import CONFIG_MAPPING
 
 from lerobot.policies.pi0.flex_attention import flex_attention_forward
+from lerobot.policies.pi0.models.gemma import GemmaConfig
+from lerobot.policies.pi0.models.main import (
+    GemmaForCausalLM,
+    PaliGemmaConfig,
+    PaliGemmaForConditionalGeneration,
+)
 
 
 def apply_rope(x, positions, max_wavelength=10_000):
@@ -56,10 +53,7 @@ def apply_rope(x, positions, max_wavelength=10_000):
     return res.to(dtype)
 
 
-class PaliGemmaWithExpertConfig(PretrainedConfig):
-    model_type = "PaliGemmaWithExpertModel"
-    sub_configs = {"paligemma_config": AutoConfig, "gemma_expert_config": AutoConfig}
-
+class PaliGemmaWithExpertConfig:
     def __init__(
         self,
         paligemma_config: dict | None = None,
@@ -67,93 +61,17 @@ class PaliGemmaWithExpertConfig(PretrainedConfig):
         freeze_vision_encoder: bool = True,
         train_expert_only: bool = True,
         attention_implementation: str = "eager",
-        **kwargs,
     ):
         self.freeze_vision_encoder = freeze_vision_encoder
         self.train_expert_only = train_expert_only
         self.attention_implementation = attention_implementation
 
-        if paligemma_config is None:
-            # Default config from Pi0
-            self.paligemma_config = CONFIG_MAPPING["paligemma"](
-                transformers_version="4.48.1",
-                _vocab_size=257152,
-                bos_token_id=2,
-                eos_token_id=1,
-                hidden_size=2048,
-                image_token_index=257152,
-                model_type="paligemma",
-                pad_token_id=0,
-                projection_dim=2048,
-                text_config={
-                    "hidden_activation": "gelu_pytorch_tanh",
-                    "hidden_size": 2048,
-                    "intermediate_size": 16384,
-                    "model_type": "gemma",
-                    "num_attention_heads": 8,
-                    "num_hidden_layers": 18,
-                    "num_image_tokens": 256,
-                    "num_key_value_heads": 1,
-                    "torch_dtype": "float32",
-                    "vocab_size": 257152,
-                },
-                vision_config={
-                    "hidden_size": 1152,
-                    "intermediate_size": 4304,
-                    "model_type": "siglip_vision_model",
-                    "num_attention_heads": 16,
-                    "num_hidden_layers": 27,
-                    "num_image_tokens": 256,
-                    "patch_size": 14,
-                    "projection_dim": 2048,
-                    "projector_hidden_act": "gelu_fast",
-                    "torch_dtype": "float32",
-                    "vision_use_head": False,
-                },
-            )
-        elif isinstance(self.paligemma_config, dict):
-            # Override Pi0 default config for PaliGemma
-            if "model_type" not in gemma_expert_config:
-                paligemma_config["model_type"] = "paligemma"
-
-            cfg_cls = CONFIG_MAPPING[paligemma_config["model_type"]]
-            self.paligemma_config = cfg_cls(**paligemma_config)
-
-        if gemma_expert_config is None:
-            # Default config from Pi0
-            self.gemma_expert_config = CONFIG_MAPPING["gemma"](
-                attention_bias=False,
-                attention_dropout=0.0,
-                bos_token_id=2,
-                eos_token_id=1,
-                head_dim=256,
-                hidden_act="gelu_pytorch_tanh",
-                hidden_activation="gelu_pytorch_tanh",
-                hidden_size=1024,
-                initializer_range=0.02,
-                intermediate_size=4096,
-                max_position_embeddings=8192,
-                model_type="gemma",
-                num_attention_heads=8,
-                num_hidden_layers=18,
-                num_key_value_heads=1,
-                pad_token_id=0,
-                rms_norm_eps=1e-06,
-                rope_theta=10000.0,
-                torch_dtype="float32",
-                transformers_version="4.48.1",
-                use_cache=True,
-                vocab_size=257152,
-            )
-        elif isinstance(self.gemma_expert_config, dict):
-            # Override Pi0 default config for Gemma Expert
-            if "model_type" not in gemma_expert_config:
-                gemma_expert_config["model_type"] = "gemma"
-
-            cfg_cls = CONFIG_MAPPING[paligemma_config["model_type"]]
-            self.gemma_expert_config = cfg_cls(**gemma_expert_config)
-
-        super().__init__(**kwargs)
+        self.paligemma_config = (
+            PaliGemmaConfig() if paligemma_config is None else PaliGemmaConfig(**paligemma_config)
+        )
+        self.gemma_expert_config = (
+            GemmaConfig() if gemma_expert_config is None else GemmaConfig(**gemma_expert_config)
+        )
 
     def __post_init__(self):
         super().__post_init__()
@@ -168,19 +86,12 @@ class PaliGemmaWithExpertConfig(PretrainedConfig):
             )
 
 
-class PaliGemmaWithExpertModel(PreTrainedModel):
-    config_class = PaliGemmaWithExpertConfig
-
+class PaliGemmaWithExpertModel(nn.Module):
     def __init__(self, config: PaliGemmaWithExpertConfig):
-        super().__init__(config=config)
+        super().__init__()
         self.config = config
         self.paligemma = PaliGemmaForConditionalGeneration(config=config.paligemma_config)
         self.gemma_expert = GemmaForCausalLM(config=config.gemma_expert_config)
-        # Remove unused modules to free up memory
-        del self.gemma_expert.model.embed_tokens
-        del self.gemma_expert.lm_head
-        del self.paligemma.language_model.lm_head
-        torch.cuda.empty_cache()
 
         self.to_bfloat16_like_physical_intelligence()
         self.set_requires_grad()
