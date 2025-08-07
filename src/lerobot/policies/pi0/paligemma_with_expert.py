@@ -74,7 +74,6 @@ class PaliGemmaWithExpertConfig:
         )
 
     def __post_init__(self):
-        super().__post_init__()
         if self.train_expert_only and not self.freeze_vision_encoder:
             raise ValueError(
                 "You set `freeze_vision_encoder=False` and `train_expert_only=True` which are not compatible."
