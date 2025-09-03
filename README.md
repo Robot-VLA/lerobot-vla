@@ -38,6 +38,9 @@ uv run python src/lerobot/scripts/eval.py \
   --env.task="StackCube-v1" \
   --env.task_description="Pick up a red cube and stack it on top of a green cube and let go of the cube without it falling." 
 ```
+> [!NOTE]
+> Make sure to install IsaacSim assets in the project root:
+> ```aws s3 cp s3://openpi-assets-simeval/env_assets/simple_example/assets.zip ./ --no-sign-request && unzip assets.zip && rm assets.zip```
 
 ```sh
 # From RoboArena: https://github.com/arhanjain/sim-evals

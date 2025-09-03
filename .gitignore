@@ -176,3 +176,6 @@ cython_debug/
 
 # all shell scripts
 *.sh
+
+# IsaacSim assets
+assets/

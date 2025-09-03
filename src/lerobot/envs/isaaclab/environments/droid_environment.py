@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from typing import List
 
@@ -23,7 +22,7 @@ from isaaclab.sensors import CameraCfg
 from isaaclab.utils import configclass, noise
 from pxr import Usd, UsdPhysics
 
-DATA_PATH = Path(os.getenv("ISAAC_SIM_ASSETS", "/isaac-sim/kit/cache/custom_assets"))
+DATA_PATH = Path(__file__).parent / "../../../../../assets"
 logging.info(f"Loading assets from: {DATA_PATH.resolve()}")  # noqa: F821
 
 
